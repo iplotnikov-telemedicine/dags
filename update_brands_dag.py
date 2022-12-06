@@ -6,6 +6,12 @@ from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
 
 
 def get_customers():
+    redshift_hook = RedshiftSQLHook(
+        postgres_conn_id='redshift_default',
+        schema='dev'
+    )
+    redshift_conn = redshift_hook.get_conn()
+    cursor = redshift_conn.cursor()
     query = '''
         select comp_id, db_name
         from ext_indica_backend.companies
@@ -27,14 +33,51 @@ def get_customers():
         order by comp_id
         limit 5
     '''
-    redshift_hook = RedshiftSQLHook(
-        postgres_conn_id='redshift_default',
-        schema='dev'
-    )
-    redshift_conn = redshift_hook.get_conn()
-    cursor = redshift_conn.cursor()
     cursor.execute(query)
     return cursor.fetchall()
+
+
+def upsert_brands(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                CREATE temporary TABLE brands_{comp_id}_temp as
+                SELECT *
+                from {ext_schema}.brands
+                where sync_updated_at > (
+                    select coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
+                    from staging.brands
+                    where comp_id = {comp_id}
+                );
+
+                DELETE FROM staging.brands
+                USING brands_{comp_id}_temp
+                WHERE staging.brands.comp_id = {comp_id}
+                    AND staging.brands.id = brands_{comp_id}_temp.id;
+            '''
+            cursor.execute(query)
+            query = f'''
+                insert into staging.brands
+                select {comp_id}, *
+                from brands_{comp_id}_temp;
+            '''
+            cursor.execute(query)
+            query = f'''
+                drop table brands_{comp_id}_temp;
+            '''
+            cursor.execute(query)
 
 
 
@@ -49,6 +92,12 @@ with DAG(
         python_callable=get_customers,
         do_xcom_push=True
     )
+    task_upsert_brands = PythonOperator(
+        task_id='upsert_brands',
+        python_callable=upsert_brands
+    )
+
+    task_get_customers >> task_upsert_brands
 
 
 
