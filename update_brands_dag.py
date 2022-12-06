@@ -483,6 +483,90 @@ def upsert_products(ti):
             cursor.execute(query)
 
 
+def upsert_register_log(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                INSERT INTO staging.register_log
+                SELECT {comp_id}, id, register_id, opening_amount, cash_sales, drops, expected_drawer, actual_drawer, 
+                    over_drawer, created_at, updated_at, "type", service_history_id, sf_guard_user_id, amount, register_type, 
+                    total_cost, total_profit, discount, tax, total_amount, method1_amount, method2_amount, method3_amount, 
+                    method4_amount, method5_amount, method6_amount, method7_amount, cash_returns, delivered_amount, pending_amount, 
+                    dc_cash_change, vehicle_id
+                FROM {ext_schema}.register_log
+                WHERE id > (
+                    select COALESCE(max(id), -1)
+                    from staging.register_log
+                    where comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+
+
+def upsert_register(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                CREATE temporary TABLE register_{comp_id}_temp as
+                SELECT *
+                FROM {ext_schema}.register
+                WHERE updated_at > (
+                    SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
+                    FROM staging.register
+                    WHERE comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+            query = f'''
+                DELETE FROM staging.register
+                USING register_{comp_id}_temp
+                WHERE staging.register.comp_id = {comp_id}
+                    AND staging.register.id = register_{comp_id}_temp.id
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.register
+                SELECT {comp_id}, id, manager_sf_guard_user_id, name, status, change_status_at, "type", is_active, 
+                    opening_amount, cash_tenders, drops, expected_drawer, cash_in_drawer, created_at, updated_at, 
+                    pending_amount, pending_count, delivered_amount, delivered_count, activator_sf_guard_user_id, 
+                    is_deleted, latitude, longitude, total_weight, "returns", method1_amount::real, method2_amount::real, 
+                    method3_amount::real, method4_amount::real, method5_amount::real, method6_amount::real, method7_amount::real, 
+                    all_methods_total::real, port, ip_address, sync_updated_at, sync_created_at, office_id, push_new_patient, 
+                    push_patient_approved, push_patient_declined, push_new_order, push_order_delivered, platform, tip_amount, 
+                    poshub_id, eta, eta_updated_at, application_name, application_version, signin_sf_guard_user_id, dc_cash_change, 
+                    dispatch_orders_based_on_delivery_zones, vehicle_id
+                FROM register_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            query = f'''
+                DROP TABLE register_{comp_id}_temp
+            '''
+            cursor.execute(query)
+
 
 with DAG(
     dag_id='update_brands_dag',
@@ -535,6 +619,14 @@ with DAG(
         task_id='upsert_products',
         python_callable=upsert_products
     )
+    task_upsert_register_log = PythonOperator(
+        task_id='upsert_register_log',
+        python_callable=upsert_register_log
+    )
+    task_upsert_register = PythonOperator(
+        task_id='upsert_register',
+        python_callable=upsert_register
+    )
 
     task_get_customers >> [
         task_upsert_brands, 
@@ -547,6 +639,8 @@ with DAG(
         task_upsert_product_transactions,
         task_upsert_product_vendors,
         task_upsert_products,
+        task_upsert_register_log,
+        task_upsert_register
     ]
 
 
