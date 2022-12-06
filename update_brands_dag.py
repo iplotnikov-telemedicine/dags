@@ -272,8 +272,8 @@ def upsert_patients(ti):
                 CREATE temporary TABLE patients_{comp_id}_temp as
                 SELECT *
                 FROM {ext_schema}.patients
-                WHERE sync_updated_at > (
-                    SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
+                WHERE updated_at > (
+                    SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                     FROM staging.patients
                     WHERE comp_id = {comp_id}
                 )
@@ -283,7 +283,7 @@ def upsert_patients(ti):
                 DELETE FROM staging.patients
                 USING patients_{comp_id}_temp
                 WHERE staging.patients.comp_id = {comp_id}
-                    AND staging.patients.id = patients_{comp_id}_temp.id
+                    AND staging.patients.pat_id = patients_{comp_id}_temp.pat_id
             '''
             cursor.execute(query)
             query = f'''
