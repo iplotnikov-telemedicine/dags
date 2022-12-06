@@ -163,6 +163,96 @@ def upsert_discounts(ti):
             cursor.execute(query)
 
 
+def upsert_patient_group_ref(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                CREATE temporary TABLE patient_group_ref_{comp_id}_temp as
+                SELECT *
+                FROM {ext_schema}.patient_group_ref
+                WHERE sync_updated_at > (
+                    SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
+                    FROM staging.patient_group_ref
+                    WHERE comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+            query = f'''
+                DELETE FROM staging.patient_group_ref
+                USING patient_group_ref_{comp_id}_temp
+                WHERE staging.patient_group_ref.comp_id = {comp_id}
+                    AND staging.patient_group_ref.id = patient_group_ref_{comp_id}_temp.id
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.patient_group_ref
+                SELECT {comp_id}, id, patient_id, group_id, sync_created_at, sync_updated_at
+                FROM patient_group_ref_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            query = f'''
+                DROP TABLE patient_group_ref_{comp_id}_temp
+            '''
+            cursor.execute(query)
+
+
+def upsert_patient_group(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                CREATE temporary TABLE patient_group_{comp_id}_temp as
+                SELECT *
+                FROM {ext_schema}.patient_group
+                WHERE sync_updated_at > (
+                    SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
+                    FROM staging.patient_group
+                    WHERE comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+            query = f'''
+                DELETE FROM staging.patient_group
+                USING patient_group_{comp_id}_temp
+                WHERE staging.patient_group.comp_id = {comp_id}
+                    AND staging.patient_group.id = patient_group_{comp_id}_temp.id
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.patient_group
+                SELECT {comp_id}, id, patient_id, group_id, sync_created_at, sync_updated_at
+                FROM patient_group_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            query = f'''
+                DROP TABLE patient_group_{comp_id}_temp
+            '''
+            cursor.execute(query)
+
+
 with DAG(
     dag_id='update_brands_dag',
     schedule_interval='@daily',
@@ -186,8 +276,22 @@ with DAG(
         task_id='upsert_discounts',
         python_callable=upsert_discounts
     )
+    task_upsert_patient_group_ref = PythonOperator(
+        task_id='upsert_patient_group_ref',
+        python_callable=upsert_patient_group_ref
+    )
+    task_upsert_patient_group = PythonOperator(
+        task_id='upsert_patient_group',
+        python_callable=upsert_patient_group
+    )
 
-    task_get_customers >> [task_upsert_brands, task_upsert_company_config, task_upsert_discounts]
+    task_get_customers >> [
+        task_upsert_brands, 
+        task_upsert_company_config, 
+        task_upsert_discounts, 
+        task_upsert_patient_group_ref,
+        task_upsert_patient_group
+    ]
 
 
 
