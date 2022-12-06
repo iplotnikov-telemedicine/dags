@@ -817,6 +817,7 @@ with DAG(
         task_upsert_register_log,
         task_upsert_register,
         task_upsert_tax_payment,
+        task_upsert_warehouse_orders,
         task_upsert_warehouse_order_items,
     ]
 
