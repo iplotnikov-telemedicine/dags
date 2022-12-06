@@ -55,27 +55,29 @@ def upsert_brands(ti):
             query = f'''
                 CREATE temporary TABLE brands_{comp_id}_temp as
                 SELECT *
-                from {ext_schema}.brands
-                where sync_updated_at > (
-                    select coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
-                    from staging.brands
-                    where comp_id = {comp_id}
-                );
-
+                FROM {ext_schema}.brands
+                WHERE sync_updated_at > (
+                    SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
+                    FROM staging.brands
+                    WHERE comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+            query = f'''
                 DELETE FROM staging.brands
                 USING brands_{comp_id}_temp
                 WHERE staging.brands.comp_id = {comp_id}
-                    AND staging.brands.id = brands_{comp_id}_temp.id;
+                    AND staging.brands.id = brands_{comp_id}_temp.id
             '''
             cursor.execute(query)
             query = f'''
-                insert into staging.brands
-                select {comp_id}, *
-                from brands_{comp_id}_temp;
+                INSERT INTO staging.brands
+                SELECT {comp_id}, *
+                FROM brands_{comp_id}_temp
             '''
             cursor.execute(query)
             query = f'''
-                drop table brands_{comp_id}_temp;
+                DROP TABLE brands_{comp_id}_temp
             '''
             cursor.execute(query)
 
