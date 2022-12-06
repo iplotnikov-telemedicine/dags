@@ -45,9 +45,7 @@ def upsert_brands(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -89,9 +87,7 @@ def upsert_company_config(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -116,9 +112,7 @@ def upsert_discounts(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -166,9 +160,7 @@ def upsert_patient_group_ref(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -210,9 +202,7 @@ def upsert_patient_group(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -254,9 +244,7 @@ def upsert_patients(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -317,9 +305,7 @@ def upsert_product_categories(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -379,9 +365,7 @@ def upsert_product_vendors(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -425,9 +409,7 @@ def upsert_products(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -479,9 +461,7 @@ def upsert_register_log(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -510,9 +490,7 @@ def upsert_register(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -562,9 +540,7 @@ def upsert_tax_payment(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -611,9 +587,7 @@ def upsert_warehouse_orders(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
@@ -670,9 +644,7 @@ def upsert_warehouse_order_items(ti):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
+        for comp_id, ext_schema in customers:
             redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
