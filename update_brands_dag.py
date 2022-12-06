@@ -74,7 +74,7 @@ def upsert_brands(ti):
             cursor.execute(query)
             query = f'''
                 INSERT INTO staging.brands
-                SELECT {comp_id}, *
+                SELECT {comp_id}, id, brand_id, brand_name, wm_id, sync_created_at, sync_updated_at, description, is_internal
                 FROM brands_{comp_id}_temp
             '''
             cursor.execute(query)
@@ -106,7 +106,7 @@ def upsert_company_config(ti):
             cursor.execute(query)
             query = f'''
                 INSERT INTO staging.company_config
-                SELECT {comp_id}, *
+                SELECT {comp_id}, id, "name", human_name, value
                 FROM {ext_schema}.company_config
             '''
             cursor.execute(query)
@@ -500,7 +500,7 @@ def upsert_register_log(ti):
             cursor = redshift_conn.cursor()
             query = f'''
                 INSERT INTO staging.register_log
-                SELECT {comp_id}, id, register_id, opening_amount, cash_sales, drops, expected_drawer, actual_drawer, 
+                SELECT {comp_id} as comp_id, id, register_id, opening_amount, cash_sales, drops, expected_drawer, actual_drawer, 
                     over_drawer, created_at, updated_at, "type", service_history_id, sf_guard_user_id, amount, register_type, 
                     total_cost, total_profit, discount, tax, total_amount, method1_amount, method2_amount, method3_amount, 
                     method4_amount, method5_amount, method6_amount, method7_amount, cash_returns, delivered_amount, pending_amount, 
@@ -568,6 +568,169 @@ def upsert_register(ti):
             cursor.execute(query)
 
 
+def upsert_tax_payment(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                CREATE temporary TABLE tax_payment_{comp_id}_temp as
+                SELECT *
+                FROM {ext_schema}.tax_payment
+                WHERE updated_at > (
+                    SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
+                    FROM staging.tax_payment
+                    WHERE comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+            query = f'''
+                DELETE FROM staging.tax_payment
+                USING tax_payment_{comp_id}_temp
+                WHERE staging.tax_payment.comp_id = {comp_id}
+                    AND staging.tax_payment.id = tax_payment_{comp_id}_temp.id
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.tax_payment
+                SELECT {comp_id}, id, order_id, order_item_id, product_id, state, county, city, 
+                    state_tax, state_mj_tax, county_tax, county_mj_tax, city_tax, city_mj_tax, 
+                    created_at, updated_at, is_deleted, state_sales_tax, county_sales_tax, 
+                    city_sales_tax, state_local_tax, county_local_tax, city_local_tax, 
+                    excise_tax, state_delivery_sales_tax, county_delivery_sales_tax, 
+                    city_delivery_sales_tax, city_delivery_local_tax, excise_delivery_tax
+                FROM tax_payment_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            query = f'''
+                DROP TABLE tax_payment_{comp_id}_temp
+            '''
+            cursor.execute(query)
+
+
+def upsert_warehouse_orders(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                CREATE temporary TABLE warehouse_orders_{comp_id}_temp as
+                SELECT *
+                FROM {ext_schema}.warehouse_orders
+                WHERE updated_at > (
+                    SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
+                    FROM staging.warehouse_orders
+                    WHERE comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+            query = f'''
+                DELETE FROM staging.warehouse_orders
+                USING warehouse_orders_{comp_id}_temp
+                WHERE staging.warehouse_orders.comp_id = {comp_id}
+                    AND staging.warehouse_orders.id = warehouse_orders_{comp_id}_temp.id
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.warehouse_orders
+                SELECT {comp_id} as comp_id, id, "number", patient_id, "type", status, order_status, payment_status, 
+                    fulfillment_status, shipment_status, created_at, updated_at, charge_by, amount, referral_discount_value, 
+                    discount_type_bak, total_amount, discount_has_changed, office_id, sum_tax, sum_discount, sum_free_discount, 
+                    sum_income, custom_discount_value, custom_discount_type_bak, delivery_address, delivery_city, delivery_state, 
+                    delivery_zip, delivery_phone, delivery_latitude, delivery_longitude, shipping_method_id, shipping_amount, 
+                    courier_register_id, "comment", sync_updated_at, sync_created_at, register_id, discount_id, 
+                    referral_discount_type, custom_discount_type, balance, method1_amount, method2_amount, method3_amount, 
+                    method4_amount, method5_amount, method6_amount, method7_amount, processing_register_id, photo, 
+                    delivery_datetime, delivery_address_id, change_amount, tip_amount, placed_at, completed_at, confirmed_at, 
+                    preferred_payment_method, is_bonus_point_as_discount, marketplace, applied_potify_credits, asap_delivery, 
+                    cashier_id, is_transit_started, metrc_status, cashier_name, patient_type, register_name, courier_id, 
+                    courier_name, courier_register_name, is_verified_by_courier, is_shipped, shipping_tracking_number, 
+                    patient_has_caregiver, patient_is_tax_exempt, metrc_substatus, checkout_staff_id, pos_mode, signature, 
+                    delivery_method, courier_number, patient_rec_number, office_zip_name, refund_type, returned_at, 
+                    shipping_method_name, tax_tier_version_id, vehicle, metrc_delivery_status, resend_staff_id, 
+                    delivery_estimated_time_of_arrival
+                FROM warehouse_orders_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            query = f'''
+                DROP TABLE warehouse_orders_{comp_id}_temp
+            '''
+            cursor.execute(query)
+
+
+def upsert_warehouse_order_items(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                CREATE temporary TABLE warehouse_order_items_{comp_id}_temp as
+                SELECT *
+                FROM {ext_schema}.warehouse_order_items
+                WHERE updated_at > (
+                    SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
+                    FROM staging.warehouse_order_items
+                    WHERE comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+            query = f'''
+                DELETE FROM staging.warehouse_order_items
+                USING warehouse_order_items_{comp_id}_temp
+                WHERE staging.warehouse_order_items.comp_id = {comp_id}
+                    AND staging.warehouse_order_items.id = warehouse_order_items_{comp_id}_temp.id
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.warehouse_order_items
+                SELECT {comp_id} as comp_id, id, order_id, product_id, "name", descr, price_type, price_per, 
+                    charge_by, price, qty, qty_free, amount, tax, discount_value, discount_type_bak, total_amount, 
+                    created_at, updated_at, is_charge_by_order, is_free, free_discount, income, discount_amount, 
+                    item_type, count, special_id, special_item_id, is_half_eighth, is_returned, returned_amount, 
+                    discount_type, free_amount, paid_amount, wcii_cart_item, sync_created_at, sync_updated_at, 
+                    product_checkin_id, is_excise, returned_at, is_marijuana_product, product_is_tax_exempt, 
+                    is_metrc, is_under_package_control, base_amount, discount_id, delivery_tax, discount_count, 
+                    is_exchanged, exchanged_at, product_brutto_weight, product_brutto_weight_validation
+                FROM warehouse_order_items_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            query = f'''
+                DROP TABLE warehouse_order_items_{comp_id}_temp
+            '''
+            cursor.execute(query)
+
+
+
 with DAG(
     dag_id='update_brands_dag',
     schedule_interval='@daily',
@@ -627,6 +790,18 @@ with DAG(
         task_id='upsert_register',
         python_callable=upsert_register
     )
+    task_upsert_tax_payment = PythonOperator(
+        task_id='upsert_tax_payment',
+        python_callable=upsert_tax_payment
+    )
+    task_upsert_warehouse_orders = PythonOperator(
+        task_id='upsert_warehouse_orders',
+        python_callable=upsert_warehouse_orders
+    )
+    task_upsert_warehouse_order_items = PythonOperator(
+        task_id='upsert_warehouse_order_items',
+        python_callable=upsert_warehouse_order_items
+    )
 
     task_get_customers >> [
         task_upsert_brands, 
@@ -640,7 +815,9 @@ with DAG(
         task_upsert_product_vendors,
         task_upsert_products,
         task_upsert_register_log,
-        task_upsert_register
+        task_upsert_register,
+        task_upsert_tax_payment,
+        task_upsert_warehouse_order_items,
     ]
 
 
