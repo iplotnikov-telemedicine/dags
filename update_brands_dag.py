@@ -155,7 +155,7 @@ def upsert_discounts(ti):
                 DROP TABLE discounts_{comp_id}_temp
             '''
             cursor.execute(query)
-            
+
 
 with DAG(
     dag_id='update_brands_dag',
@@ -172,8 +172,16 @@ with DAG(
         task_id='upsert_brands',
         python_callable=upsert_brands
     )
+    task_upsert_company_config = PythonOperator(
+        task_id='upsert_company_config',
+        python_callable=upsert_company_config
+    )
+    task_upsert_discounts = PythonOperator(
+        task_id='upsert_discounts',
+        python_callable=upsert_discounts
+    )
 
-    task_get_customers >> task_upsert_brands
+    task_get_customers >> [task_upsert_brands, task_upsert_company_config, task_upsert_discounts]
 
 
 
