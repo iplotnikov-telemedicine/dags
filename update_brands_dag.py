@@ -359,7 +359,7 @@ with DAG(
         task_upsert_discounts, 
         task_upsert_patient_group_ref,
         task_upsert_patient_group,
-        upsert_patients
+        task_upsert_patients
     ]
 
 
