@@ -30,6 +30,8 @@ def get_customers():
                 8585, 3324, 8582, 6022, 3439, 8583, 8586, 6443, 8588, 
                 6483, 7900, 8587, 8589, 9471, 7304, 7523, 8911, 213
             ) and potify_sync_entity_updated_at >= current_date - interval '1 week'
+            and comp_is_approved = 1 
+            and comp_is_disabled = 0
             and comp_id in (3628, 4546)
         ORDER BY comp_id
     '''
@@ -82,6 +84,78 @@ def upsert_brands(ti):
             cursor.execute(query)
 
 
+def upsert_company_config(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                DELETE FROM staging.company_config
+                WHERE comp_id = {comp_id}
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.company_config
+                SELECT {comp_id}, *
+                FROM {ext_schema}.company_config
+            '''
+            cursor.execute(query)
+
+
+def upsert_discounts(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                CREATE temporary TABLE discounts_{comp_id}_temp as
+                SELECT *
+                from {ext_schema}.discounts
+                where sync_updated_at > (
+                    select coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
+                    from staging.discounts
+                    where comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+            query = f'''
+                DELETE FROM staging.discounts
+                USING discounts_{comp_id}_temp
+                WHERE staging.discounts.comp_id = {comp_id}
+                    AND staging.discounts.id = discounts_{comp_id}_temp.id
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.discounts
+                SELECT {comp_id}, *
+                FROM discounts_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            query = f'''
+                DROP TABLE discounts_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            
 
 with DAG(
     dag_id='update_brands_dag',
