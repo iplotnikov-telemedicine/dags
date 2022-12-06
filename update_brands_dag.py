@@ -381,6 +381,109 @@ def upsert_product_transactions(ti):
             cursor.execute(query)
 
 
+def upsert_product_vendors(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                CREATE temporary TABLE product_vendors_{comp_id}_temp as
+                SELECT *
+                FROM {ext_schema}.product_vendors
+                WHERE updated_at > (
+                    SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
+                    FROM staging.product_vendors
+                    WHERE comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+            query = f'''
+                DELETE FROM staging.product_vendors
+                USING product_vendors_{comp_id}_temp
+                WHERE staging.product_vendors.comp_id = {comp_id}
+                    AND staging.product_vendors.id = product_vendors_{comp_id}_temp.id
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.product_vendors
+                SELECT {comp_id}, id, name, description, phone, email, created_at, updated_at, patient_id, address, 
+                    fax, skype, balance, sync_updated_at, sync_created_at, deleted_at, license, metrc_name, 
+                    metrc_license, vendor_type, registration_certificate
+                FROM product_vendors_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            query = f'''
+                DROP TABLE product_vendors_{comp_id}_temp
+            '''
+            cursor.execute(query)
+
+
+def upsert_products(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                CREATE temporary TABLE products_{comp_id}_temp as
+                SELECT *
+                FROM {ext_schema}.products
+                WHERE sync_updated_at > (
+                    SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
+                    FROM staging.products
+                    WHERE comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+            query = f'''
+                DELETE FROM staging.products
+                USING products_{comp_id}_temp
+                WHERE staging.products.comp_id = {comp_id}
+                    AND staging.products.prod_id = products_{comp_id}_temp.prod_id
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.products
+                SELECT {comp_id}, prod_id, prod_name, prod_price, prod_qty_w, prod_joints_qty_w, prod_qty_o, prod_joints_qty_o, 
+                    prod_vendor_id, prod_category_id, prod_photo, prod_price_type, prod_is_taxable, prod_symbol, cast(prod_gram_prepack_qty_w as BIGINT) as prod_gram_prepack_qty_w, 
+                    prod_eighth_prepack_qty_w, prod_quarter_prepack_qty_w, prod_half_prepack_qty_w, prod_ounce_prepack_qty_w, prod_gram_prepack_qty_o, 
+                    prod_eighth_prepack_qty_o, prod_quarter_prepack_qty_o, prod_half_prepack_qty_o, prod_ounce_prepack_qty_o, prod_tax_id_bak, 
+                    prod_is_tax_included, prod_joint_cost, prod_is_on_shop, prod_is_free_shipping, sync_updated_at, sync_created_at, prod_balance, 
+                    prod_is_on_weedmaps, prod_is_custom_price, prod_backend_product_id, prod_tax_profile_id, deleted_at, prod_price_preset_id, 
+                    prod_lab_type, prod_is_print_label, lab_result_id, prod_sku, prod_tv_photo, prod_is_hidden, strain, potify_id, is_marijuana_product, 
+                    marijuana_product_type, prod_is_excise, is_metrc, is_metrc_compliant, is_only_each, net_weight, net_weight_measure, show_on_leafly, 
+                    is_preroll, preroll_weight, product_type_id, prod_upc, is_tax_exempt, cast(is_under_package_control as boolean) as is_under_package_control, 
+                    directions, twcc, product_class, brand_id, potify_brand_product_id, wm_product_id, brand_product_strain_name, 
+                    prod_tax_tier_version_id, is_city_local_tax_exempt, brutto_weight, brutto_weight_validation, custom_cost
+                FROM products_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            query = f'''
+                DROP TABLE products_{comp_id}_temp
+            '''
+            cursor.execute(query)
+
+
+
 with DAG(
     dag_id='update_brands_dag',
     schedule_interval='@daily',
@@ -424,6 +527,14 @@ with DAG(
         task_id='upsert_product_transactions',
         python_callable=upsert_product_transactions
     )
+    task_upsert_product_vendors = PythonOperator(
+        task_id='upsert_product_vendors',
+        python_callable=upsert_product_vendors
+    )
+    task_upsert_products = PythonOperator(
+        task_id='upsert_products',
+        python_callable=upsert_products
+    )
 
     task_get_customers >> [
         task_upsert_brands, 
@@ -434,6 +545,8 @@ with DAG(
         task_upsert_patients,
         task_upsert_product_categories,
         task_upsert_product_transactions,
+        task_upsert_product_vendors,
+        task_upsert_products,
     ]
 
 
