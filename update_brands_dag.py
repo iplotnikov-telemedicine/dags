@@ -869,7 +869,7 @@ with DAG(
         python_callable=upsert_warehouse_order_items
     )
 
-    [task_get_customers, task_get_ext_databases] >> [
+    task_get_customers >> task_get_ext_databases >> [
         task_upsert_brands, 
         task_upsert_company_config, 
         task_upsert_discounts, 
