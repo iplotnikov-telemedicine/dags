@@ -243,7 +243,7 @@ def upsert_patient_group(ti):
             cursor.execute(query)
             query = f'''
                 INSERT INTO staging.patient_group
-                SELECT {comp_id}, id, patient_id, group_id, sync_created_at, sync_updated_at
+                SELECT {comp_id}, id, "name", sync_created_at, sync_updated_at, is_auto, start_date, end_date
                 FROM patient_group_{comp_id}_temp
             '''
             cursor.execute(query)
