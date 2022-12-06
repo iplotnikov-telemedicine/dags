@@ -673,6 +673,9 @@ def upsert_warehouse_order_items(customers):
             cursor.execute(query)
 
 
+customers = get_customers()
+
+
 with DAG(
     dag_id='update_brands_dag',
     schedule_interval='@daily',
@@ -686,77 +689,77 @@ with DAG(
     task_upsert_brands = PythonOperator(
         task_id='upsert_brands',
         python_callable=upsert_brands,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_company_config = PythonOperator(
         task_id='upsert_company_config',
         python_callable=upsert_company_config,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_discounts = PythonOperator(
         task_id='upsert_discounts',
         python_callable=upsert_discounts,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_patient_group_ref = PythonOperator(
         task_id='upsert_patient_group_ref',
         python_callable=upsert_patient_group_ref,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_patient_group = PythonOperator(
         task_id='upsert_patient_group',
         python_callable=upsert_patient_group,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_patients = PythonOperator(
         task_id='upsert_patients',
         python_callable=upsert_patients,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_product_categories = PythonOperator(
         task_id='upsert_product_categories',
         python_callable=upsert_product_categories,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_product_transactions = PythonOperator(
         task_id='upsert_product_transactions',
         python_callable=upsert_product_transactions,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_product_vendors = PythonOperator(
         task_id='upsert_product_vendors',
         python_callable=upsert_product_vendors,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_products = PythonOperator(
         task_id='upsert_products',
         python_callable=upsert_products,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_register_log = PythonOperator(
         task_id='upsert_register_log',
         python_callable=upsert_register_log,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_register = PythonOperator(
         task_id='upsert_register',
         python_callable=upsert_register,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_tax_payment = PythonOperator(
         task_id='upsert_tax_payment',
         python_callable=upsert_tax_payment,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_warehouse_orders = PythonOperator(
         task_id='upsert_warehouse_orders',
         python_callable=upsert_warehouse_orders,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
     task_upsert_warehouse_order_items = PythonOperator(
         task_id='upsert_warehouse_order_items',
         python_callable=upsert_warehouse_order_items,
-        op_args=[task_get_customers]
+        op_args=[customers]
     )
 
     task_get_customers >> [
