@@ -58,8 +58,8 @@ def upsert_brands(ti):
                 CREATE temporary TABLE brands_{comp_id}_temp as
                 SELECT *
                 FROM {ext_schema}.brands
-                WHERE updated_at > (
-                    SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
+                WHERE sync_updated_at > (
+                    SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
                     FROM staging.brands
                     WHERE comp_id = {comp_id}
                 )
@@ -131,8 +131,8 @@ def upsert_discounts(ti):
                 CREATE temporary TABLE discounts_{comp_id}_temp as
                 SELECT *
                 from {ext_schema}.discounts
-                where sync_updated_at > (
-                    select coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
+                where updated_at > (
+                    select coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                     from staging.discounts
                     where comp_id = {comp_id}
                 )
