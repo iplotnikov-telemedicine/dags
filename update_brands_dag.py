@@ -34,7 +34,7 @@ def get_customers():
         limit 5
     '''
     cursor.execute(query)
-    return cursor.fetchall()
+    return cursor.fetchall()[0]
 
 
 def upsert_brands(ti):
