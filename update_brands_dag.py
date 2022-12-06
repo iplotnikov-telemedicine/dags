@@ -40,8 +40,7 @@ def get_customers():
     return cursor.fetchall()
 
 
-def upsert_brands(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_brands(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -82,8 +81,7 @@ def upsert_brands(ti):
             cursor.execute(query)
 
 
-def upsert_company_config(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_company_config(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -107,8 +105,7 @@ def upsert_company_config(ti):
             cursor.execute(query)
 
 
-def upsert_discounts(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_discounts(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -155,8 +152,7 @@ def upsert_discounts(ti):
             cursor.execute(query)
 
 
-def upsert_patient_group_ref(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_patient_group_ref(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -197,8 +193,7 @@ def upsert_patient_group_ref(ti):
             cursor.execute(query)
 
 
-def upsert_patient_group(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_patient_group(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -239,8 +234,7 @@ def upsert_patient_group(ti):
             cursor.execute(query)
 
 
-def upsert_patients(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_patients(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -300,8 +294,7 @@ def upsert_patients(ti):
             cursor.execute(query)
 
 
-def upsert_product_categories(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_product_categories(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -328,8 +321,7 @@ def upsert_product_categories(ti):
             cursor.execute(query)
 
 
-def upsert_product_transactions(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_product_transactions(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -360,8 +352,7 @@ def upsert_product_transactions(ti):
             cursor.execute(query)
 
 
-def upsert_product_vendors(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_product_vendors(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -404,8 +395,7 @@ def upsert_product_vendors(ti):
             cursor.execute(query)
 
 
-def upsert_products(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_products(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -456,8 +446,7 @@ def upsert_products(ti):
             cursor.execute(query)
 
 
-def upsert_register_log(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_register_log(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -485,8 +474,7 @@ def upsert_register_log(ti):
             cursor.execute(query)
 
 
-def upsert_register(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_register(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -535,8 +523,7 @@ def upsert_register(ti):
             cursor.execute(query)
 
 
-def upsert_tax_payment(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_tax_payment(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -582,8 +569,7 @@ def upsert_tax_payment(ti):
             cursor.execute(query)
 
 
-def upsert_warehouse_orders(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_warehouse_orders(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -639,8 +625,7 @@ def upsert_warehouse_orders(ti):
             cursor.execute(query)
 
 
-def upsert_warehouse_order_items(ti):
-    customers = ti.xcom_pull(task_ids=['get_customers'])
+def upsert_warehouse_order_items(customers):
     if not customers:
         raise Exception('No customers found')
     else:
@@ -696,68 +681,82 @@ with DAG(
 ) as dag:
     task_get_customers = PythonOperator(
         task_id='get_customers',
-        python_callable=get_customers,
-        do_xcom_push=True
+        python_callable=get_customers
     )
     task_upsert_brands = PythonOperator(
         task_id='upsert_brands',
-        python_callable=upsert_brands
+        python_callable=upsert_brands,
+        op_args=[task_get_customers]
     )
     task_upsert_company_config = PythonOperator(
         task_id='upsert_company_config',
-        python_callable=upsert_company_config
+        python_callable=upsert_company_config,
+        op_args=[task_get_customers]
     )
     task_upsert_discounts = PythonOperator(
         task_id='upsert_discounts',
-        python_callable=upsert_discounts
+        python_callable=upsert_discounts,
+        op_args=[task_get_customers]
     )
     task_upsert_patient_group_ref = PythonOperator(
         task_id='upsert_patient_group_ref',
-        python_callable=upsert_patient_group_ref
+        python_callable=upsert_patient_group_ref,
+        op_args=[task_get_customers]
     )
     task_upsert_patient_group = PythonOperator(
         task_id='upsert_patient_group',
-        python_callable=upsert_patient_group
+        python_callable=upsert_patient_group,
+        op_args=[task_get_customers]
     )
     task_upsert_patients = PythonOperator(
         task_id='upsert_patients',
-        python_callable=upsert_patients
+        python_callable=upsert_patients,
+        op_args=[task_get_customers]
     )
     task_upsert_product_categories = PythonOperator(
         task_id='upsert_product_categories',
-        python_callable=upsert_product_categories
+        python_callable=upsert_product_categories,
+        op_args=[task_get_customers]
     )
     task_upsert_product_transactions = PythonOperator(
         task_id='upsert_product_transactions',
-        python_callable=upsert_product_transactions
+        python_callable=upsert_product_transactions,
+        op_args=[task_get_customers]
     )
     task_upsert_product_vendors = PythonOperator(
         task_id='upsert_product_vendors',
-        python_callable=upsert_product_vendors
+        python_callable=upsert_product_vendors,
+        op_args=[task_get_customers]
     )
     task_upsert_products = PythonOperator(
         task_id='upsert_products',
-        python_callable=upsert_products
+        python_callable=upsert_products,
+        op_args=[task_get_customers]
     )
     task_upsert_register_log = PythonOperator(
         task_id='upsert_register_log',
-        python_callable=upsert_register_log
+        python_callable=upsert_register_log,
+        op_args=[task_get_customers]
     )
     task_upsert_register = PythonOperator(
         task_id='upsert_register',
-        python_callable=upsert_register
+        python_callable=upsert_register,
+        op_args=[task_get_customers]
     )
     task_upsert_tax_payment = PythonOperator(
         task_id='upsert_tax_payment',
-        python_callable=upsert_tax_payment
+        python_callable=upsert_tax_payment,
+        op_args=[task_get_customers]
     )
     task_upsert_warehouse_orders = PythonOperator(
         task_id='upsert_warehouse_orders',
-        python_callable=upsert_warehouse_orders
+        python_callable=upsert_warehouse_orders,
+        op_args=[task_get_customers]
     )
     task_upsert_warehouse_order_items = PythonOperator(
         task_id='upsert_warehouse_order_items',
-        python_callable=upsert_warehouse_order_items
+        python_callable=upsert_warehouse_order_items,
+        op_args=[task_get_customers]
     )
 
     task_get_customers >> [
