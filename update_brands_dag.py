@@ -317,6 +317,70 @@ def upsert_patients(ti):
             cursor.execute(query)
 
 
+def upsert_product_categories(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                DELETE FROM staging.product_categories
+                WHERE comp_id = {comp_id}
+            '''
+            cursor.execute(query)
+            query = f'''
+                INSERT INTO staging.product_categories
+                SELECT {comp_id}, id, "name", description, photo, lft, rgt, 
+                    "level", created_at, updated_at, is_system, sync_updated_at, 
+                    sync_created_at, icon_name, activation_time, 
+                    label_template_internal_id, icon_color, system_id
+                FROM {ext_schema}.product_categories
+            '''
+            cursor.execute(query)
+
+
+def upsert_product_transactions(ti):
+    customers = ti.xcom_pull(task_ids=['get_customers'])
+    if not customers:
+        raise Exception('No customers.')
+    else:
+        for customer in customers:
+            comp_id = customer[0]
+            db_name = customer[1]
+            ext_schema = f'ext_indica_{db_name}'
+            redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+            redshift_conn = redshift_hook.get_conn()
+            cursor = redshift_conn.cursor()
+            query = f'''
+                INSERT INTO staging.product_transactions
+                SELECT
+                    {comp_id} as comp_id, id, product_id, office_id, doctor_id, patient_id, user_id, type, 
+                    qty, price, price_per, total_price, date, note, item_type, 
+                    transfer_direction, qty_free, product_checkin_id, product_name, 
+                    office_to_id, product_to_id, product_to_name, cost, order_id, 
+                    base_weight, product_checkin_to_id, office_name
+                FROM {ext_schema}.product_transactions
+                WHERE id > (
+                    select COALESCE(max(id), -1)
+                    from staging.product_transactions
+                    where comp_id = {comp_id}
+                )
+            '''
+            cursor.execute(query)
+
+
 with DAG(
     dag_id='update_brands_dag',
     schedule_interval='@daily',
@@ -352,6 +416,14 @@ with DAG(
         task_id='upsert_patients',
         python_callable=upsert_patients
     )
+    task_upsert_product_categories = PythonOperator(
+        task_id='upsert_product_categories',
+        python_callable=upsert_product_categories
+    )
+    task_upsert_product_transactions = PythonOperator(
+        task_id='upsert_product_transactions',
+        python_callable=upsert_product_transactions
+    )
 
     task_get_customers >> [
         task_upsert_brands, 
@@ -359,7 +431,9 @@ with DAG(
         task_upsert_discounts, 
         task_upsert_patient_group_ref,
         task_upsert_patient_group,
-        task_upsert_patients
+        task_upsert_patients,
+        task_upsert_product_categories,
+        task_upsert_product_transactions,
     ]
 
 
