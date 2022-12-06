@@ -58,8 +58,8 @@ def upsert_brands(ti):
                 CREATE temporary TABLE brands_{comp_id}_temp as
                 SELECT *
                 FROM {ext_schema}.brands
-                WHERE sync_updated_at > (
-                    SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
+                WHERE updated_at > (
+                    SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                     FROM staging.brands
                     WHERE comp_id = {comp_id}
                 )
@@ -147,7 +147,13 @@ def upsert_discounts(ti):
             cursor.execute(query)
             query = f'''
                 INSERT INTO staging.discounts
-                SELECT {comp_id}, *
+                SELECT {comp_id}, id, "name", "type", value, sync_created_at, sync_updated_at, 
+                    deleted_at, use_type, apply_type, is_pos, is_potify, promo_code, status, 
+                    is_individual_use_only, is_exclude_items_on_special, start_date, end_date, 
+                    is_ongoing, happy_weekdays, min_subtotal_price, uses_count, is_once_per_patient, 
+                    bogo_buy, bogo_get, bogo_multiple, is_first_time_patient, is_show_promo_code_on_potify, 
+                    max_subtotal_price, display_name, is_show_name_on_collection_tile, image, tv_image, 
+                    product_filter_id, created_at, updated_at, hide_banner, display_priority
                 FROM discounts_{comp_id}_temp
             '''
             cursor.execute(query)
