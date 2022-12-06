@@ -13,9 +13,9 @@ def get_customers():
     redshift_conn = redshift_hook.get_conn()
     cursor = redshift_conn.cursor()
     query = '''
-        select comp_id, db_name
-        from ext_indica_backend.companies
-        where 1=1
+        SELECT comp_id, db_name
+        FROM ext_indica_backend.companies
+        WHERE 1=1
             and db_name like '%_company'
             and is_blank = 0
             and comp_project = 'Indica'
@@ -30,8 +30,8 @@ def get_customers():
                 8585, 3324, 8582, 6022, 3439, 8583, 8586, 6443, 8588, 
                 6483, 7900, 8587, 8589, 9471, 7304, 7523, 8911, 213
             ) and potify_sync_entity_updated_at >= current_date - interval '1 week'
-        order by comp_id
-        limit 5
+            and comp_id in (3628, 4546)
+        ORDER BY comp_id
     '''
     cursor.execute(query)
     return cursor.fetchall()[0]
