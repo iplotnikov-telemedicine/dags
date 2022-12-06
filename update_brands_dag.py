@@ -37,7 +37,7 @@ def get_customers():
         ORDER BY comp_id
     '''
     cursor.execute(query)
-    return cursor.fetchall()[0]
+    return cursor.fetchall()
 
 
 def get_ext_databases():
