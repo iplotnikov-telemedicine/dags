@@ -812,7 +812,7 @@ customers = get_customers()
 
 with DAG(
     dag_id='update_brands_dag',
-    schedule_interval='@daily',
+    schedule_interval='0 8 * * *', # UTC time
     start_date=datetime(year=2022, month=2, day=1),
     catchup=False,
 ) as dag:
