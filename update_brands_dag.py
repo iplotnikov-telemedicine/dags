@@ -19,14 +19,13 @@ def get_customers():
         INNER JOIN svv_external_schemas
         ON companies.db_name = svv_external_schemas.databasename
         WHERE 1=1
-            and comp_id in (3628, 9928, 3583, 7479, 9449, 9624, 10123, 6294, 
-                9204, 7953, 9854, 9744, 9315, 8291, 9006, 9817, 7705, 7520, 9180, 9816, 7620, 7620, 
-                7746, 9736, 9940, 9670, 9410, 9994, 9800, 9129, 9411, 9982, 9668, 10132, 10141, 
-                4546, 5722, 6745, 7539, 8907, 7740, 10241)
             and db_name like '%_company'
             and is_blank = 0
             and comp_project = 'Indica'
-            and not comp_email like '%maildrop%'
+            and not domain_prefix like '%prod'
+            and not domain_prefix like 'test%'
+            and not domain_prefix like '%demo%'
+            and (not comp_email like '%maildrop.cc' or comp_email = 'calif@maildrop.cc')
             and not comp_email like '%indica%'
             and not comp_name like 'Blank company%'
             and not comp_name like '%test%'
@@ -36,9 +35,8 @@ def get_customers():
             and comp_id not in (8580, 724, 6805, 8581, 6934, 8584, 
                 8585, 3324, 8582, 6022, 3439, 8583, 8586, 6443, 8588, 
                 6483, 7900, 8587, 8589, 9471, 7304, 7523, 8911, 213
-            ) and potify_sync_entity_updated_at >= current_date - interval '1 week'
-            and comp_is_approved = 1 
-            and comp_is_disabled = 0
+            ) and potify_sync_entity_updated_at >= current_date - interval '1 day'
+            and comp_is_approved = 1
         ORDER BY comp_id
     '''
     cursor.execute(query)
