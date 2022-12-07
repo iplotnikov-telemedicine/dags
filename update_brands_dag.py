@@ -725,11 +725,11 @@ with DAG(
         python_callable=upsert_brands,
         op_args=[customers]
     )
-    task_upsert_company_config = PythonOperator(
-        task_id='upsert_company_config',
-        python_callable=upsert_company_config,
-        op_args=[customers]
-    )
+    # task_upsert_company_config = PythonOperator(
+    #     task_id='upsert_company_config',
+    #     python_callable=upsert_company_config,
+    #     op_args=[customers]
+    # )
     # task_upsert_discounts = PythonOperator(
     #     task_id='upsert_discounts',
     #     python_callable=upsert_discounts,
@@ -798,7 +798,7 @@ with DAG(
 
     task_get_customers >> [
         task_upsert_brands, 
-        task_upsert_company_config, 
+        # task_upsert_company_config, 
         # task_upsert_discounts, 
         # task_upsert_patient_group_ref,
         # task_upsert_patient_group,
