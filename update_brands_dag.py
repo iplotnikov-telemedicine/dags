@@ -98,6 +98,7 @@ def upsert_brands(customers):
                 '''
                 cursor.execute(query)
                 logging.info(query)
+            redshift_conn.commit()
             logging.info(f'Task upsert_brands is finished for company {comp_id}')
 
 
