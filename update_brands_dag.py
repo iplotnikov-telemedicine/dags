@@ -51,12 +51,12 @@ def upsert_brands(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE brands_{comp_id}_temp as
@@ -93,12 +93,12 @@ def upsert_company_config(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 DELETE FROM staging.company_config
@@ -118,12 +118,12 @@ def upsert_discounts(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE discounts_{comp_id}_temp as
@@ -166,12 +166,12 @@ def upsert_patient_group_ref(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE patient_group_ref_{comp_id}_temp as
@@ -208,12 +208,12 @@ def upsert_patient_group(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE patient_group_{comp_id}_temp as
@@ -250,12 +250,12 @@ def upsert_patients(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE patients_{comp_id}_temp as
@@ -311,12 +311,12 @@ def upsert_product_categories(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 DELETE FROM staging.product_categories
@@ -339,14 +339,12 @@ def upsert_product_transactions(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for customer in customers:
-            comp_id = customer[0]
-            ext_schema = customer[1]
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 INSERT INTO staging.product_transactions
@@ -371,12 +369,12 @@ def upsert_product_vendors(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE product_vendors_{comp_id}_temp as
@@ -415,12 +413,12 @@ def upsert_products(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE products_{comp_id}_temp as
@@ -467,12 +465,12 @@ def upsert_register_log(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 INSERT INTO staging.register_log
@@ -496,12 +494,12 @@ def upsert_register(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE register_{comp_id}_temp as
@@ -546,12 +544,12 @@ def upsert_tax_payment(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE tax_payment_{comp_id}_temp as
@@ -593,12 +591,12 @@ def upsert_warehouse_orders(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE warehouse_orders_{comp_id}_temp as
@@ -650,12 +648,12 @@ def upsert_warehouse_order_items(customers):
     if not customers:
         raise Exception('No customers found')
     else:
-        for comp_id, ext_schema in customers:
-            redshift_hook = RedshiftSQLHook(
+        redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
-            redshift_conn = redshift_hook.get_conn()
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
             cursor = redshift_conn.cursor()
             query = f'''
                 CREATE temporary TABLE warehouse_order_items_{comp_id}_temp as
