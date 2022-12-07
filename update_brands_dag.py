@@ -3,6 +3,7 @@ from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.operators.redshift_sql import RedshiftSQLOperator
 from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
+import logging
 
 
 def get_customers():
@@ -18,6 +19,10 @@ def get_customers():
         INNER JOIN svv_external_schemas
         ON companies.db_name = svv_external_schemas.databasename
         WHERE 1=1
+            and comp_id in (3628, 9928, 3583, 7479, 9449, 9624, 10123, 6294, 
+                9204, 7953, 9854, 9744, 9315, 8291, 9006, 9817, 7705, 7520, 9180, 9816, 7620, 7620, 
+                7746, 9736, 9940, 9670, 9410, 9994, 9800, 9129, 9411, 9982, 9668, 10132, 10141, 
+                4546, 5722, 6745, 7539, 8907, 7740, 10241)
             and db_name like '%_company'
             and is_blank = 0
             and comp_project = 'Indica'
@@ -37,7 +42,9 @@ def get_customers():
         ORDER BY comp_id
     '''
     cursor.execute(query)
-    return cursor.fetchall()
+    data = cursor.fetchall()
+    logging.info(f'The number of companies is being processing: {len(data)}')
+    return data
 
 
 def upsert_brands(customers):
@@ -79,6 +86,7 @@ def upsert_brands(customers):
                 DROP TABLE brands_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_brands is finished for company {comp_id}')
 
 
 def upsert_company_config(customers):
@@ -103,6 +111,7 @@ def upsert_company_config(customers):
                 FROM {ext_schema}.company_config
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_company_config is finished for company {comp_id}')
 
 
 def upsert_discounts(customers):
@@ -150,6 +159,7 @@ def upsert_discounts(customers):
                 DROP TABLE discounts_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_discounts is finished for company {comp_id}')
 
 
 def upsert_patient_group_ref(customers):
@@ -191,6 +201,7 @@ def upsert_patient_group_ref(customers):
                 DROP TABLE patient_group_ref_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_patients_group_ref is finished for company {comp_id}')
 
 
 def upsert_patient_group(customers):
@@ -232,6 +243,7 @@ def upsert_patient_group(customers):
                 DROP TABLE patient_group_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_patient_group is finished for company {comp_id}')
 
 
 def upsert_patients(customers):
@@ -292,6 +304,7 @@ def upsert_patients(customers):
                 DROP TABLE patients_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_patients is finished for company {comp_id}')
 
 
 def upsert_product_categories(customers):
@@ -319,6 +332,7 @@ def upsert_product_categories(customers):
                 FROM {ext_schema}.product_categories
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_product_categories is finished for company {comp_id}')
 
 
 def upsert_product_transactions(customers):
@@ -350,6 +364,7 @@ def upsert_product_transactions(customers):
                 )
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_product_transactions is finished for company {comp_id}')
 
 
 def upsert_product_vendors(customers):
@@ -393,6 +408,7 @@ def upsert_product_vendors(customers):
                 DROP TABLE product_vendors_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_product_vendors is finished for company {comp_id}')
 
 
 def upsert_products(customers):
@@ -444,6 +460,7 @@ def upsert_products(customers):
                 DROP TABLE products_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_products is finished for company {comp_id}')
 
 
 def upsert_register_log(customers):
@@ -472,6 +489,7 @@ def upsert_register_log(customers):
                 )
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_register_log is finished for company {comp_id}')
 
 
 def upsert_register(customers):
@@ -521,6 +539,7 @@ def upsert_register(customers):
                 DROP TABLE register_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_register is finished for company {comp_id}')
 
 
 def upsert_tax_payment(customers):
@@ -567,6 +586,7 @@ def upsert_tax_payment(customers):
                 DROP TABLE tax_payment_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_tax_payment is finished for company {comp_id}')
 
 
 def upsert_warehouse_orders(customers):
@@ -623,6 +643,7 @@ def upsert_warehouse_orders(customers):
                 DROP TABLE warehouse_orders_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_warehouse_orders is finished for company {comp_id}')
 
 
 def upsert_warehouse_order_items(customers):
@@ -671,6 +692,7 @@ def upsert_warehouse_order_items(customers):
                 DROP TABLE warehouse_order_items_{comp_id}_temp
             '''
             cursor.execute(query)
+            logging.info(f'Task upsert_warehouse_order_items is finished for company {comp_id}')
 
 
 customers = get_customers()
