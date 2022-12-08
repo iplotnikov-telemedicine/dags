@@ -14,7 +14,7 @@ with DAG(
 
     activate = BashOperator(
         task_id='activate',
-        bash_command='source ~/dbt/venv/bin/activate; cd ~/dbt/indica;'
+        bash_command='source /home/ubuntu/dbt/venv/bin/activate; cd ~/dbt/indica;'
     )
 
     # dbt_run = BashOperator(
