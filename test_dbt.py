@@ -12,24 +12,7 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    activate = BashOperator(
-        task_id='activate',
-        bash_command='source /home/ubuntu/dbt/venv/bin/activate; cd ~/dbt/indica;'
-    )
-
-    # dbt_run = BashOperator(
-    #     task_id='dbt_run',
-    #     bash_command='dbt run'
-    # )
-
     dbt_test = BashOperator(
         task_id='dbt_test',
-        bash_command='dbt test'
+        bash_command='source /home/ubuntu/dbt/venv/bin/activate; cd /home/ubuntu/dbt/indica; dbt test; deactivate;'
     )
-
-    deactivate = BashOperator(
-        task_id='activate_venv',
-        bash_command='deactivate'
-    )
-
-    activate >> dbt_test >> deactivate
