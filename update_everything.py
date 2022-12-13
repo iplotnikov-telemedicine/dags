@@ -1,10 +1,21 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 # from airflow.providers.amazon.aws.operators.redshift_sql import RedshiftSQLOperator
 from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
 from airflow.operators.bash_operator import BashOperator
 import logging
+
+
+
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 10,
+    'retry_delay': timedelta(minutes=1)
+}
 
 
 def get_customers():
@@ -815,6 +826,7 @@ with DAG(
     dag_id='update_everything',
     schedule_interval='0 8 * * *', # UTC time
     start_date=datetime(year=2022, month=12, day=8),
+    default_args=default_args,
     catchup=False,
 ) as dag:
     task_get_customers = PythonOperator(
