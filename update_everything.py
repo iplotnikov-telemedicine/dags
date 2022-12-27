@@ -819,6 +819,64 @@ def upsert_warehouse_order_items(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+
+def upsert_service_history(customers):
+    if not customers:
+        raise Exception('No customers found')
+    else:
+        redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
+            logging.info(f'Task is starting for company {comp_id}')
+            with redshift_conn.cursor() as cursor:
+                query = f'''
+                    CREATE temporary TABLE service_history_{comp_id}_temp as
+                    SELECT *
+                    FROM {ext_schema}.service_history
+                    WHERE updated_at > (
+                        SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
+                        FROM staging.service_history
+                        WHERE comp_id = {comp_id}
+                    )
+                '''
+                cursor.execute(query)
+                logging.info(f'Temp table is created')
+            with redshift_conn.cursor() as cursor:
+                query = f'''
+                    DELETE FROM staging.service_history
+                    USING service_history_{comp_id}_temp
+                    WHERE staging.service_history.comp_id = {comp_id}
+                        AND staging.service_history.id = service_history_{comp_id}_temp.id
+                '''
+                cursor.execute(query)
+                logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+            with redshift_conn.cursor() as cursor:
+                query = f'''
+                    INSERT INTO staging.service_history
+                    SELECT {comp_id} as comp_id, id, service_id, office_id, user_id, patient_id, doctor_id, 
+                        object_id, object_type, referal_id, notes, amount, edit_amount, edit_reason, created_at, 
+                        updated_at, ad_campaign_id, ad_campaign_patient_type_id, intake, exam, has_intake_for_approving, 
+                        has_exam_for_approving, order_id, amount_by_referral_points, count_referral_points, register_id, 
+                        balance, method1_amount, method2_amount, method3_amount, method4_amount, method5_amount, method6_amount, 
+                        method7_amount, profit, is_take_payment, tax, dc_cash_change, is_dejavoo_payment, "type", cost, discount, 
+                        "free", payment_method, payment_amount
+                    FROM service_history_{comp_id}_temp
+                '''
+                cursor.execute(query)
+                logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+            with redshift_conn.cursor() as cursor:
+                query = f'''
+                    DROP TABLE service_history_{comp_id}_temp
+                '''
+                cursor.execute(query)
+                logging.info(f'Temp table is dropped')
+            redshift_conn.commit()
+            logging.info(f'Task is finished for company {comp_id}')
+
+
 customers = get_customers()
 
 
@@ -893,6 +951,11 @@ with DAG(
         python_callable=upsert_register,
         op_args=[customers]
     )
+    task_upsert_service_history = PythonOperator(
+        task_id='upsert_service_history',
+        python_callable=upsert_service_history,
+        op_args=[customers]
+    )
     task_upsert_tax_payment = PythonOperator(
         task_id='upsert_tax_payment',
         python_callable=upsert_tax_payment,
@@ -926,6 +989,7 @@ with DAG(
         task_upsert_products,
         task_upsert_register_log,
         task_upsert_register,
+        task_upsert_service_history,
         task_upsert_tax_payment,
         task_upsert_warehouse_orders,
         task_upsert_warehouse_order_items,
