@@ -58,7 +58,7 @@ def get_customers():
     logging.info(query)
     data = cursor.fetchall()
     logging.info(f'The number of companies is being processing: {len(data)}')
-    return data
+    return map(list, zip(*data))
 
 
 @task
@@ -117,6 +117,5 @@ with DAG(
     catchup=False,
 ) as dag:
     customers = get_customers()
-    comp_id_list, ext_schema_list = map(list, zip(*customers))
-    upsert_brands.expand(comp_id=comp_id_list, ext_schema=ext_schema_list)
+    upsert_brands.expand(comp_id=customers[0], ext_schema=customers[1])
 
