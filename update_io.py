@@ -9,6 +9,7 @@ from airflow.utils.task_group import TaskGroup
 from airflow.decorators import task_group, task
 
 
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -59,6 +60,7 @@ def get_customers():
     return data
 
 
+@task
 def upsert_brands(comp_id):
     redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
@@ -115,9 +117,5 @@ with DAG(
     catchup=False,
 ) as dag:
     customers = get_customers()
-    task_upsert_brands = PythonOperator(
-        task_id='upsert_brands',
-        python_callable=upsert_brands
-    )
-    task_upsert_brands.partial().expand(comp_id=[comp_id for comp_id, _ in customers])
+    upsert_brands.expand(comp_id=[comp_id for comp_id, _ in customers])
 
