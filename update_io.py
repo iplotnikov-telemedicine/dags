@@ -20,6 +20,7 @@ default_args = {
 }
 
 
+@task
 def get_customers():
     redshift_hook = RedshiftSQLHook(
         postgres_conn_id='redshift_default',
@@ -61,52 +62,51 @@ def get_customers():
 
 
 @task
-def upsert_brands(comp_id):
+def upsert_brands(comp_id, ext_schema):
     redshift_hook = RedshiftSQLHook(
                 postgres_conn_id='redshift_default',
                 schema='dev'
             )
     redshift_conn = redshift_hook.get_conn()
-    for comp_id, ext_schema in customers:
-        logging.info(f'Task is starting for company {comp_id}')
-        with redshift_conn.cursor() as cursor:
-            query = f'''
-                CREATE temporary TABLE brands_{comp_id}_temp as
-                SELECT *
-                FROM {ext_schema}.brands
-                WHERE sync_updated_at > (
-                    SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
-                    FROM staging.brands
-                    WHERE comp_id = {comp_id}
-                )
-            '''
-            cursor.execute(query)
-            logging.info(f'Temp table is created')
-        with redshift_conn.cursor() as cursor:
-            query = f'''
-                DELETE FROM staging.brands
-                USING brands_{comp_id}_temp
-                WHERE staging.brands.comp_id = {comp_id}
-                    AND staging.brands.id = brands_{comp_id}_temp.id
-            '''
-            cursor.execute(query)
-            logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
-        with redshift_conn.cursor() as cursor:
-            query = f'''
-                INSERT INTO staging.brands
-                SELECT {comp_id}, id, brand_id, brand_name, wm_id, sync_created_at, sync_updated_at, description, is_internal
-                FROM brands_{comp_id}_temp
-            '''
-            cursor.execute(query)
-            logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
-        with redshift_conn.cursor() as cursor:
-            query = f'''
-                DROP TABLE brands_{comp_id}_temp
-            '''
-            cursor.execute(query)
-            logging.info(f'Temp table is dropped')
-        redshift_conn.commit()
-        logging.info(f'Task is finished for company {comp_id}')
+    logging.info(f'Task is starting for company {comp_id}')
+    with redshift_conn.cursor() as cursor:
+        query = f'''
+            CREATE temporary TABLE brands_{comp_id}_temp as
+            SELECT *
+            FROM {ext_schema}.brands
+            WHERE sync_updated_at > (
+                SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
+                FROM staging.brands
+                WHERE comp_id = {comp_id}
+            )
+        '''
+        cursor.execute(query)
+        logging.info(f'Temp table is created')
+    with redshift_conn.cursor() as cursor:
+        query = f'''
+            DELETE FROM staging.brands
+            USING brands_{comp_id}_temp
+            WHERE staging.brands.comp_id = {comp_id}
+                AND staging.brands.id = brands_{comp_id}_temp.id
+        '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+    with redshift_conn.cursor() as cursor:
+        query = f'''
+            INSERT INTO staging.brands
+            SELECT {comp_id}, id, brand_id, brand_name, wm_id, sync_created_at, sync_updated_at, description, is_internal
+            FROM brands_{comp_id}_temp
+        '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+    with redshift_conn.cursor() as cursor:
+        query = f'''
+            DROP TABLE brands_{comp_id}_temp
+        '''
+        cursor.execute(query)
+        logging.info(f'Temp table is dropped')
+    redshift_conn.commit()
+    logging.info(f'Task is finished for company {comp_id}')
 
 
 with DAG(
@@ -117,5 +117,6 @@ with DAG(
     catchup=False,
 ) as dag:
     customers = get_customers()
-    upsert_brands.expand(comp_id=[comp_id for comp_id, _ in customers])
+    comp_id_list, ext_schema_list = map(list, zip(*customers))
+    upsert_brands.expand(comp_id=comp_id_list, ext_schema=ext_schema_list)
 
