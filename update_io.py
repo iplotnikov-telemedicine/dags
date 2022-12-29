@@ -29,7 +29,7 @@ def get_customers():
     redshift_conn = redshift_hook.get_conn()
     cursor = redshift_conn.cursor()
     query = '''
-        SELECT companies.comp_id, TRIM(svv_external_schemas.schemaname) as schemaname
+        SELECT companies.comp_id::varchar, TRIM(svv_external_schemas.schemaname) as schemaname
         FROM ext_indica_backend.companies
         INNER JOIN svv_external_schemas
         ON companies.db_name = svv_external_schemas.databasename
