@@ -401,6 +401,36 @@ def upsert_product_categories(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+def upsert_product_filter_index(customers):
+    if not customers:
+        raise Exception('No customers found')
+    else:
+        redshift_hook = RedshiftSQLHook(
+                postgres_conn_id='redshift_default',
+                schema='dev'
+            )
+        redshift_conn = redshift_hook.get_conn()
+        for comp_id, ext_schema in customers:
+            logging.info(f'Task is starting for company {comp_id}')
+            with redshift_conn.cursor() as cursor:
+                query = f'''
+                    DELETE FROM staging.product_filter_index
+                    WHERE comp_id = {comp_id}
+                '''
+                cursor.execute(query)
+                logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+            with redshift_conn.cursor() as cursor:
+                query = f'''
+                    INSERT INTO staging.product_filter_index
+                    SELECT {comp_id}, id, product_id, product_filter_id
+                    FROM {ext_schema}.product_filter_index
+                '''
+                cursor.execute(query)
+                logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+            redshift_conn.commit()
+            logging.info(f'Task is finished for company {comp_id}')
+
+
 def upsert_product_transactions(customers):
     if not customers:
         raise Exception('No customers found')
@@ -819,7 +849,6 @@ def upsert_warehouse_order_items(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
-
 def upsert_service_history(customers):
     if not customers:
         raise Exception('No customers found')
@@ -926,6 +955,11 @@ with DAG(
         python_callable=upsert_product_categories,
         op_args=[customers]
     )
+    task_upsert_product_filter_index = PythonOperator(
+        task_id='upsert_product_filter_index',
+        python_callable=upsert_product_filter_index,
+        op_args=[customers]
+    )
     task_upsert_product_transactions = PythonOperator(
         task_id='upsert_product_transactions',
         python_callable=upsert_product_transactions,
@@ -984,6 +1018,7 @@ with DAG(
         task_upsert_patient_group,
         task_upsert_patients,
         task_upsert_product_categories,
+        task_upsert_product_filter_index,
         task_upsert_product_transactions,
         task_upsert_product_vendors,
         task_upsert_products,
