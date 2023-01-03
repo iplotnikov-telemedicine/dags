@@ -78,7 +78,7 @@ def upsert_brands(customers):
                         SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.brands
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and sync_updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -159,7 +159,7 @@ def upsert_discounts(customers):
                         select coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                         from staging.discounts
                         where comp_id = {comp_id}
-                    )
+                    ) and updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -216,7 +216,7 @@ def upsert_patient_group_ref(customers):
                         SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.patient_group_ref
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and sync_updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -267,7 +267,7 @@ def upsert_patient_group(customers):
                         SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.patient_group
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and sync_updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -318,7 +318,7 @@ def upsert_patients(customers):
                         SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.patients
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -452,11 +452,11 @@ def upsert_product_transactions(customers):
                         office_to_id, product_to_id, product_to_name, cost, order_id, 
                         base_weight, product_checkin_to_id, office_name
                     FROM {ext_schema}.product_transactions
-                    WHERE id > (
-                        select COALESCE(max(id), -1)
+                    WHERE date > (
+                        select coalesce(max(date), '1970-01-01 00:00:00'::timestamp)
                         from staging.product_transactions
                         where comp_id = {comp_id}
-                    )
+                    ) and date < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
@@ -484,7 +484,7 @@ def upsert_product_vendors(customers):
                         SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.product_vendors
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -537,7 +537,7 @@ def upsert_products(customers):
                         SELECT coalesce(max(sync_updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.products
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and sync_updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -598,11 +598,11 @@ def upsert_register_log(customers):
                         method4_amount, method5_amount, method6_amount, method7_amount, cash_returns, delivered_amount, pending_amount, 
                         dc_cash_change, vehicle_id
                     FROM {ext_schema}.register_log
-                    WHERE id > (
-                        select COALESCE(max(id), -1)
+                    WHERE created_at > (
+                        select coalesce(max(created_at), '1970-01-01 00:00:00'::timestamp)
                         from staging.register_log
                         where comp_id = {comp_id}
-                    )
+                    ) and created_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
@@ -630,7 +630,7 @@ def upsert_register(customers):
                         SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.register
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -689,7 +689,7 @@ def upsert_tax_payment(customers):
                         SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.tax_payment
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -745,7 +745,7 @@ def upsert_warehouse_orders(customers):
                         SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.warehouse_orders
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -811,7 +811,7 @@ def upsert_warehouse_order_items(customers):
                         SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.warehouse_order_items
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
@@ -869,7 +869,7 @@ def upsert_service_history(customers):
                         SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
                         FROM staging.service_history
                         WHERE comp_id = {comp_id}
-                    )
+                    ) and updated_at < CURRENT_DATE + interval '8 hours'
                 '''
                 cursor.execute(query)
                 logging.info(f'Temp table is created')
