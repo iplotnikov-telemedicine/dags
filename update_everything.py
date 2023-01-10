@@ -3,7 +3,7 @@ from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 # from airflow.providers.amazon.aws.operators.redshift_sql import RedshiftSQLOperator
 from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
-from airflow.operators.bash_operator import BashOperator
+from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator
 import logging
 
 
@@ -1007,10 +1007,30 @@ with DAG(
         python_callable=upsert_warehouse_order_items,
         op_args=[customers]
     )
-    task_dbt_run_and_test = BashOperator(
-        task_id='dbt_run_and_test',
-        bash_command='source /home/ubuntu/dbt/venv/bin/activate; cd /home/ubuntu/dbt/indica; dbt run; dbt test; deactivate;'
+    dbt_run = DbtRunOperator(
+        task_id="dbt_run",
+        project_dir="/home/ubuntu/dbt/indica",
+        profiles_dir="/home/ubuntu/.dbt",
+        # fail_fast=True,
+        # task_id="dbt_run_hourly",
+        # project_dir="s3://my-bucket/dbt/project/key/prefix/",
+        # profiles_dir="s3://my-bucket/dbt/profiles/key/prefix/",
+        # select=["+tag:hourly"],
+        # exclude=["tag:deprecated"],
+        # target="production",
+        # profile="my-project",
+        # full_refresh=False,
     )
+    dbt_test = DbtTestOperator(
+        task_id="dbt_test",
+        project_dir="/home/ubuntu/dbt/indica",
+        profiles_dir="/home/ubuntu/.dbt",
+    )
+    
+    # task_dbt_run_and_test = BashOperator(
+    #     task_id='dbt_run_and_test',
+    #     bash_command='source /home/ubuntu/dbt/venv/bin/activate; cd /home/ubuntu/dbt/indica; dbt run; dbt test; deactivate;'
+    # )
 
     task_get_customers >> [
         task_upsert_brands, 
@@ -1030,7 +1050,7 @@ with DAG(
         task_upsert_tax_payment,
         task_upsert_warehouse_orders,
         task_upsert_warehouse_order_items,
-    ] >> task_dbt_run_and_test
+    ] >> dbt_run >> dbt_test
 
 
 
