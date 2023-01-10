@@ -11,8 +11,9 @@ import logging
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'email_on_failure': False,
-    'email_on_retry': False,
+    'email': ['i.plotnikov@telemedicine.ge', 'd.prokopev@telemedicine.ge'],
+    'email_on_failure': True,
+    'email_on_retry': True,
     'retries': 10,
     'retry_delay': timedelta(minutes=1)
 }
