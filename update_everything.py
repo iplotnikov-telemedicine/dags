@@ -1063,7 +1063,7 @@ with DAG(
         python_callable=upsert_warehouse_order_items,
         op_args=[customers]
     )
-    task_upsert_upsert_product_checkins = PythonOperator(
+    task_upsert_product_checkins = PythonOperator(
         task_id='upsert_product_checkins',
         python_callable=upsert_product_checkins,
         op_args=[customers]
@@ -1101,6 +1101,7 @@ with DAG(
         task_upsert_patient_group,
         task_upsert_patients,
         task_upsert_product_categories,
+        task_upsert_product_checkins,
         task_upsert_product_filter_index,
         task_upsert_product_transactions,
         task_upsert_product_vendors,
