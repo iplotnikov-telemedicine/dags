@@ -949,7 +949,7 @@ def upsert_product_checkins(customers):
                     harvest_date, sync_created_at, sync_updated_at, opc, sale_qty, office_id, is_metrc, available_qty, is_finished, producer_id, 
                     vendor_type, vendor_name, facility_id, is_special, packaged_date, best_by_date, deleted_at, production_run, is_under_package_control, 
                     is_form_modified, metrc_initial_quantity, external_barcode, packaged_by_id, manifest, is_sample_package, paused_to_datetime, 
-                    excise_tax_paid, link_to_coa
+                    excise_tax_paid
                     FROM product_checkins_{comp_id}_temp
                 '''
                 cursor.execute(query)
