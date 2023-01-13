@@ -972,7 +972,6 @@ with DAG(
     default_args=default_args,
     catchup=False,
 ) as dag:
-    customers = get_customers()
     with TaskGroup(group_id='upsert_tables') as upsert_tables:
         # upsert_brands.expand(customer_data=customers)
         # upsert_company_config.expand(customer_data=customers)
@@ -990,7 +989,7 @@ with DAG(
         # upsert_tax_payment.expand(customer_data=customers)
         # upsert_warehouse_orders.expand(customer_data=customers)
         # upsert_warehouse_order_items.expand(customer_data=customers)
-        upsert_product_checkins.expand(customer_data=customers)
+        upsert_product_checkins.expand(customer_data=get_customers())
     dbt_run = DbtRunOperator(
         task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
