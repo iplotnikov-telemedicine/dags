@@ -954,8 +954,10 @@ def upsert_product_checkins(customer_data):
     logging.info(f'Task is finished for company {comp_id}')
 
 
-# @task_group(group_id="upsert_tables")
-# def upsert_tables(customers):
+@task_group(group_id="upsert_tables")
+def upsert_tables(customers):
+    upsert_warehouse_order_items.expand(customer_data=customers)
+    upsert_product_checkins.expand(customer_data=customers)
     # upsert_brands.expand(customer_data=customers)
     # upsert_company_config.expand(customer_data=customers)
     # upsert_discounts.expand(customer_data=customers)
@@ -981,9 +983,6 @@ with DAG(
     default_args=default_args,
     catchup=False,
 ) as dag:
-    customers = get_customers()
-    upsert_warehouse_order_items.expand(customer_data=customers)
-    upsert_product_checkins.expand(customer_data=customers)
     dbt_run = DbtRunOperator(
         task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
@@ -1004,4 +1003,4 @@ with DAG(
         profiles_dir="/home/ubuntu/.dbt",
     )
 
-    [upsert_warehouse_order_items, upsert_product_checkins] >> dbt_run >> dbt_test
+    upsert_tables(get_customers()) >> dbt_run >> dbt_test
