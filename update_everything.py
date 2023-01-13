@@ -985,7 +985,7 @@ with DAG(
     customers = get_customers()
     upsert_tables(customers)
     dbt_run = DbtRunOperator(
-        task_id="dbt_run --select warehouse_order_items",
+        task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
         # fail_fast=True,
