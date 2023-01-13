@@ -1011,4 +1011,4 @@ with DAG(
         profiles_dir="/home/ubuntu/.dbt",
     )
 
-    upsert_tables >> dbt_run >> dbt_test
+    get_customers >> upsert_tables >> dbt_run >> dbt_test
