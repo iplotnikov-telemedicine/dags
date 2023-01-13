@@ -35,7 +35,6 @@ def get_customers():
         ON int_customers.db_name = svv_external_schemas.databasename
         WHERE int_customers.potify_sync_entity_updated_at >= current_date - interval '1 day'
         ORDER BY comp_id
-        LIMIT 5
     '''
     cursor.execute(query)
     logging.info(query)
@@ -47,6 +46,7 @@ def get_customers():
 @task(max_active_tis_per_dag=1)
 def upsert_brands(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -87,6 +87,7 @@ def upsert_brands(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_company_config(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -112,6 +113,7 @@ def upsert_company_config(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_discounts(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -158,6 +160,7 @@ def upsert_discounts(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_patient_group_ref(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -198,6 +201,7 @@ def upsert_patient_group_ref(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_patient_group(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -238,6 +242,7 @@ def upsert_patient_group(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_patients(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -297,6 +302,7 @@ def upsert_patients(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_product_categories(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -325,6 +331,7 @@ def upsert_product_categories(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_product_filter_index(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -350,6 +357,7 @@ def upsert_product_filter_index(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_product_transactions(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -381,6 +389,7 @@ def upsert_product_transactions(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_product_vendors(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -423,6 +432,7 @@ def upsert_product_vendors(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_products(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -473,6 +483,7 @@ def upsert_products(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_register_log(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -503,6 +514,7 @@ def upsert_register_log(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_register(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -551,6 +563,7 @@ def upsert_register(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_tax_payment(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -597,6 +610,7 @@ def upsert_tax_payment(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_warehouse_orders(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -652,6 +666,7 @@ def upsert_warehouse_orders(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_warehouse_order_items(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -699,6 +714,7 @@ def upsert_warehouse_order_items(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_service_history(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
@@ -745,6 +761,7 @@ def upsert_service_history(customer_data):
 @task(max_active_tis_per_dag=1)
 def upsert_product_checkins(customer_data):
     (comp_id, ext_schema) = customer_data
+    logging.info(f'{comp_id} is being processed')
     redshift_hook = RedshiftSQLHook(
             postgres_conn_id='redshift_default',
             schema='dev',
