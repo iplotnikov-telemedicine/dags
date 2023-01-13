@@ -1004,4 +1004,4 @@ with DAG(
         profiles_dir="/home/ubuntu/.dbt",
     )
 
-    get_customers >> [upsert_warehouse_order_items, upsert_product_checkins] >> dbt_run >> dbt_test
+    [upsert_warehouse_order_items, upsert_product_checkins] >> dbt_run >> dbt_test
