@@ -42,7 +42,7 @@ def get_customers():
     return data
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_brands(customer_data):
     (comp_id, ext_schema) = customer_data
     redshift_hook = RedshiftSQLHook(
@@ -50,8 +50,6 @@ def upsert_brands(customer_data):
             schema='dev'
         )
     redshift_conn = redshift_hook.get_conn()
-    with redshift_conn.cursor() as cursor:
-        cursor.execute('''BEGIN''')
     logging.info(f'Task is starting for company {comp_id}')
     with redshift_conn.cursor() as cursor:
         query = f'''
@@ -89,8 +87,6 @@ def upsert_brands(customer_data):
         '''
         cursor.execute(query)
         logging.info(f'Temp table is dropped')
-    with redshift_conn.cursor() as cursor:
-        cursor.execute('''END''')
     redshift_conn.commit()
     logging.info(f'Task is finished for company {comp_id}')
 
