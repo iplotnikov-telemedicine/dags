@@ -967,12 +967,12 @@ def upsert_product_checkins(customer_data):
 
 with DAG(
     dag_id='update_everything',
-    schedule_interval='0 8 * * *', # UTC time
+    schedule='0 8 * * *', # UTC time
     start_date=datetime(year=2022, month=12, day=8),
     default_args=default_args,
     catchup=False,
 ) as dag:
-    with TaskGroup(group_id='upsert_tables') as upsert_tables:
+    customers = get_customers()
         # upsert_brands.expand(customer_data=customers)
         # upsert_company_config.expand(customer_data=customers)
         # upsert_discounts.expand(customer_data=customers)
@@ -989,7 +989,7 @@ with DAG(
         # upsert_tax_payment.expand(customer_data=customers)
         # upsert_warehouse_orders.expand(customer_data=customers)
         # upsert_warehouse_order_items.expand(customer_data=customers)
-        upsert_product_checkins.expand(customer_data=get_customers())
+    upsert_product_checkins.expand(customer_data=customers)
     dbt_run = DbtRunOperator(
         task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
@@ -1010,5 +1010,5 @@ with DAG(
         profiles_dir="/home/ubuntu/.dbt",
     )
 
-    upsert_tables.set_downstream(dbt_run)
-    dbt_run.set_downstream(dbt_test)
+    # upsert_product_checkins.set_downstream(dbt_run)
+    # dbt_run.set_downstream(dbt_test)
