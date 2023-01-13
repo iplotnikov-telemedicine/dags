@@ -1011,4 +1011,5 @@ with DAG(
         profiles_dir="/home/ubuntu/.dbt",
     )
 
-    get_customers >> upsert_tables >> dbt_run >> dbt_test
+    upsert_tables.set_downstream(dbt_run)
+    dbt_run.set_downstream(dbt_test)
