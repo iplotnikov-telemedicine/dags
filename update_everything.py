@@ -998,10 +998,10 @@ with DAG(
         # profile="my-project",
         # full_refresh=False,
     )
-    upsert_tables.set_downstream(dbt_run)
     dbt_test = DbtTestOperator(
         task_id="dbt_test",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
     )
-    dbt_run.set_downstream(dbt_test)
+
+    get_customers >> upsert_tables >> dbt_run >> dbt_test
