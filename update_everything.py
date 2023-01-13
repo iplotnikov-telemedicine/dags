@@ -4,8 +4,7 @@ from airflow.operators.python import PythonOperator
 # from airflow.providers.amazon.aws.operators.redshift_sql import RedshiftSQLOperator
 from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
 from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator
-from airflow.decorators import task
-from airflow.utils.task_group import TaskGroup
+from airflow.decorators import task, task_group
 import logging
 
 
@@ -793,63 +792,53 @@ def get_customers():
 #             logging.info(f'Task is finished for company {comp_id}')
 
 
-# @task(max_active_tis_per_dag=1)
-# def upsert_warehouse_order_items(customers):
-#     if not customers:
-#         raise Exception('No customers found')
-#     else:
-#         redshift_hook = RedshiftSQLHook(
-#                 postgres_conn_id='redshift_default',
-#                 schema='dev'
-#             )
-#         redshift_conn = redshift_hook.get_conn()
-#         for comp_id, ext_schema in customers:
-#             logging.info(f'Task is starting for company {comp_id}')
-#             with redshift_conn.cursor() as cursor:
-#                 query = f'''
-#                     CREATE temporary TABLE warehouse_order_items_{comp_id}_temp as
-#                     SELECT *
-#                     FROM {ext_schema}.warehouse_order_items
-#                     WHERE updated_at > (
-#                         SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
-#                         FROM staging.warehouse_order_items
-#                         WHERE comp_id = {comp_id}
-#                     ) and updated_at < CURRENT_DATE + interval '8 hours'
-#                 '''
-#                 cursor.execute(query)
-#                 logging.info(f'Temp table is created')
-#             with redshift_conn.cursor() as cursor:
-#                 query = f'''
-#                     DELETE FROM staging.warehouse_order_items
-#                     USING warehouse_order_items_{comp_id}_temp
-#                     WHERE staging.warehouse_order_items.comp_id = {comp_id}
-#                         AND staging.warehouse_order_items.id = warehouse_order_items_{comp_id}_temp.id
-#                 '''
-#                 cursor.execute(query)
-#                 logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
-#             with redshift_conn.cursor() as cursor:
-#                 query = f'''
-#                     INSERT INTO staging.warehouse_order_items
-#                     SELECT {comp_id} as comp_id, id, order_id, product_id, "name", descr, price_type, price_per, 
-#                         charge_by, price, qty, qty_free, amount, tax, discount_value, discount_type_bak, total_amount, 
-#                         created_at, updated_at, is_charge_by_order, is_free, free_discount, income, discount_amount, 
-#                         item_type, count, special_id, special_item_id, is_half_eighth, is_returned, returned_amount, 
-#                         discount_type, free_amount, paid_amount, wcii_cart_item, sync_created_at, sync_updated_at, 
-#                         product_checkin_id, is_excise, returned_at, is_marijuana_product, product_is_tax_exempt, 
-#                         is_metrc, is_under_package_control, base_amount, discount_id, delivery_tax, discount_count, 
-#                         is_exchanged, exchanged_at, product_brutto_weight, product_brutto_weight_validation
-#                     FROM warehouse_order_items_{comp_id}_temp
-#                 '''
-#                 cursor.execute(query)
-#                 logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
-#             with redshift_conn.cursor() as cursor:
-#                 query = f'''
-#                     DROP TABLE warehouse_order_items_{comp_id}_temp
-#                 '''
-#                 cursor.execute(query)
-#                 logging.info(f'Temp table is dropped')
-#             redshift_conn.commit()
-#             logging.info(f'Task is finished for company {comp_id}')
+@task(max_active_tis_per_dag=1)
+def upsert_warehouse_order_items(customer_data):
+    (comp_id, ext_schema) = customer_data
+    redshift_hook = RedshiftSQLHook(
+            postgres_conn_id='redshift_default',
+            schema='dev',
+            autocommit=True
+        )
+    logging.info(f'Task is starting for company {comp_id}')
+    sql_stmts = [f'''
+                    CREATE temporary TABLE warehouse_order_items_{comp_id}_temp as
+                    SELECT *
+                    FROM {ext_schema}.warehouse_order_items
+                    WHERE updated_at > (
+                        SELECT coalesce(max(updated_at), '1970-01-01 00:00:00'::timestamp)
+                        FROM staging.warehouse_order_items
+                        WHERE comp_id = {comp_id}
+                    ) and updated_at < CURRENT_DATE + interval '8 hours'
+                ''',
+                f'''
+                    DELETE FROM staging.warehouse_order_items
+                    USING warehouse_order_items_{comp_id}_temp
+                    WHERE staging.warehouse_order_items.comp_id = {comp_id}
+                        AND staging.warehouse_order_items.id = warehouse_order_items_{comp_id}_temp.id
+                ''',
+                f'''
+                    INSERT INTO staging.warehouse_order_items
+                    SELECT {comp_id} as comp_id, id, order_id, product_id, "name", descr, price_type, price_per, 
+                        charge_by, price, qty, qty_free, amount, tax, discount_value, discount_type_bak, total_amount, 
+                        created_at, updated_at, is_charge_by_order, is_free, free_discount, income, discount_amount, 
+                        item_type, count, special_id, special_item_id, is_half_eighth, is_returned, returned_amount, 
+                        discount_type, free_amount, paid_amount, wcii_cart_item, sync_created_at, sync_updated_at, 
+                        product_checkin_id, is_excise, returned_at, is_marijuana_product, product_is_tax_exempt, 
+                        is_metrc, is_under_package_control, base_amount, discount_id, delivery_tax, discount_count, 
+                        is_exchanged, exchanged_at, product_brutto_weight, product_brutto_weight_validation
+                    FROM warehouse_order_items_{comp_id}_temp
+                ''',
+                f'''
+                    DROP TABLE warehouse_order_items_{comp_id}_temp
+                '''
+    ]
+    with redshift_hook.get_conn() as con:
+        with con.cursor() as cursor:
+            for stmt in sql_stmts:
+                cursor.execute(stmt)
+                logging.info(f'{cursor.rowcount} rows')
+    logging.info(f'Task is finished for company {comp_id}')
 
 
 # @task(max_active_tis_per_dag=1)
@@ -965,6 +954,27 @@ def upsert_product_checkins(customer_data):
     logging.info(f'Task is finished for company {comp_id}')
 
 
+@task_group
+def upsert_tables(customers):
+    # upsert_brands.expand(customer_data=customers)
+    # upsert_company_config.expand(customer_data=customers)
+    # upsert_discounts.expand(customer_data=customers)
+    # upsert_patient_group_ref.expand(customer_data=customers)
+    # upsert_patient_group.expand(customer_data=customers)
+    # upsert_product_categories.expand(customer_data=customers)
+    # upsert_product_filter_index.expand(customer_data=customers)
+    # upsert_product_transactions.expand(customer_data=customers)
+    # upsert_product_vendors.expand(customer_data=customers)
+    # upsert_products.expand(customer_data=customers)
+    # upsert_register_log.expand(customer_data=customers)
+    # upsert_register.expand(customer_data=customers)
+    # upsert_service_history.expand(customer_data=customers)
+    # upsert_tax_payment.expand(customer_data=customers)
+    # upsert_warehouse_orders.expand(customer_data=customers)
+    upsert_warehouse_order_items.expand(customer_data=customers)
+    upsert_product_checkins.expand(customer_data=customers)
+
+
 with DAG(
     dag_id='update_everything',
     schedule='0 8 * * *', # UTC time
@@ -973,25 +983,9 @@ with DAG(
     catchup=False,
 ) as dag:
     customers = get_customers()
-        # upsert_brands.expand(customer_data=customers)
-        # upsert_company_config.expand(customer_data=customers)
-        # upsert_discounts.expand(customer_data=customers)
-        # upsert_patient_group_ref.expand(customer_data=customers)
-        # upsert_patient_group.expand(customer_data=customers)
-        # upsert_product_categories.expand(customer_data=customers)
-        # upsert_product_filter_index.expand(customer_data=customers)
-        # upsert_product_transactions.expand(customer_data=customers)
-        # upsert_product_vendors.expand(customer_data=customers)
-        # upsert_products.expand(customer_data=customers)
-        # upsert_register_log.expand(customer_data=customers)
-        # upsert_register.expand(customer_data=customers)
-        # upsert_service_history.expand(customer_data=customers)
-        # upsert_tax_payment.expand(customer_data=customers)
-        # upsert_warehouse_orders.expand(customer_data=customers)
-        # upsert_warehouse_order_items.expand(customer_data=customers)
-    upsert_product_checkins.expand(customer_data=customers)
+    upsert_tables(customers)
     dbt_run = DbtRunOperator(
-        task_id="dbt_run",
+        task_id="dbt_run --select warehouse_order_items",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
         # fail_fast=True,
@@ -1004,11 +998,10 @@ with DAG(
         # profile="my-project",
         # full_refresh=False,
     )
+    upsert_tables.set_downstream(dbt_run)
     dbt_test = DbtTestOperator(
         task_id="dbt_test",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
     )
-
-    # upsert_product_checkins.set_downstream(dbt_run)
-    # dbt_run.set_downstream(dbt_test)
+    dbt_run.set_downstream(dbt_test)
