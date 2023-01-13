@@ -956,7 +956,6 @@ def upsert_product_checkins(customer_data):
         f'''
             DROP TABLE product_checkins_{comp_id}_temp
         '''
-
     ]
     with redshift_hook.get_conn() as con:
         with con.cursor() as cursor:
