@@ -954,7 +954,7 @@ def upsert_product_checkins(customer_data):
     logging.info(f'Task is finished for company {comp_id}')
 
 
-@task_group
+@task_group(group_id="upsert_tables")
 def upsert_tables(customers):
     # upsert_brands.expand(customer_data=customers)
     # upsert_company_config.expand(customer_data=customers)
