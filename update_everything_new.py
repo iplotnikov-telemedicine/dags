@@ -865,4 +865,5 @@ with DAG(
         profiles_dir="/home/ubuntu/.dbt",
     )
 
-    upsert_group_1(get_customers()) >> upsert_group_2(get_customers()) >> dbt_run >> dbt_test
+    customers = get_customers()
+    upsert_group_1(customers) >> upsert_group_2(customers) >> dbt_run >> dbt_test
