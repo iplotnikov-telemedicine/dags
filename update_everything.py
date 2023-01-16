@@ -43,7 +43,7 @@ def get_customers():
     return data
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_brands(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -84,7 +84,7 @@ def upsert_brands(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_company_config(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -110,7 +110,7 @@ def upsert_company_config(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_discounts(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -157,7 +157,7 @@ def upsert_discounts(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_patient_group_ref(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -198,7 +198,7 @@ def upsert_patient_group_ref(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_patient_group(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -239,7 +239,7 @@ def upsert_patient_group(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_patients(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -299,7 +299,7 @@ def upsert_patients(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_product_categories(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -328,7 +328,7 @@ def upsert_product_categories(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_product_filter_index(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -354,7 +354,7 @@ def upsert_product_filter_index(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_product_transactions(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -386,7 +386,7 @@ def upsert_product_transactions(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_product_vendors(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -429,7 +429,7 @@ def upsert_product_vendors(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_products(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -480,7 +480,7 @@ def upsert_products(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_register_log(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -511,7 +511,7 @@ def upsert_register_log(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_register(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -560,7 +560,7 @@ def upsert_register(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_tax_payment(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -607,7 +607,7 @@ def upsert_tax_payment(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_warehouse_orders(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -663,7 +663,7 @@ def upsert_warehouse_orders(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_warehouse_order_items(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -711,7 +711,7 @@ def upsert_warehouse_order_items(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_service_history(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
@@ -758,7 +758,7 @@ def upsert_service_history(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task(max_active_tis_per_dag=1)
+@task
 def upsert_product_checkins(customer_data):
     (comp_id, ext_schema) = customer_data
     logging.info(f'{comp_id} is being processed')
