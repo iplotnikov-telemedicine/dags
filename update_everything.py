@@ -33,7 +33,7 @@ def get_customers():
         FROM test.int_customers
         INNER JOIN svv_external_schemas
         ON int_customers.db_name = svv_external_schemas.databasename
-        WHERE int_customers.potify_sync_entity_updated_at >= current_date - interval '1 day'
+        WHERE int_customers.potify_sync_entity_updated_at >= current_date - interval '3 day'
         ORDER BY comp_id
     '''
     cursor.execute(query)
