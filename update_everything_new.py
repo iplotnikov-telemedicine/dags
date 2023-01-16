@@ -35,7 +35,6 @@ def get_customers():
         ON int_customers.db_name = svv_external_schemas.databasename
         WHERE int_customers.potify_sync_entity_updated_at >= current_date - interval '3 day'
         ORDER BY comp_id
-        LIMIT 10
     '''
     cursor.execute(query)
     logging.info(query)
@@ -824,11 +823,11 @@ def upsert_group_1(customers):
     upsert_product_checkins.expand(customer_data=customers)
     upsert_product_filter_index.expand(customer_data=customers)
     upsert_product_transactions.expand(customer_data=customers)
-    upsert_product_vendors.expand(customer_data=customers)
     
 
 @task_group(group_id="upsert_group_2")
 def upsert_group_2(customers):
+    upsert_product_vendors.expand(customer_data=customers)
     upsert_products.expand(customer_data=customers)
     upsert_register_log.expand(customer_data=customers)
     upsert_register.expand(customer_data=customers)
