@@ -561,5 +561,4 @@ with DAG(
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
     )
-
     upsert_tables.expand(customer_data=get_customers()) >> dbt_run >> dbt_test
