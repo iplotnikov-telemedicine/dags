@@ -35,6 +35,7 @@ def get_customers():
         ON int_customers.db_name = svv_external_schemas.databasename
         WHERE int_customers.potify_sync_entity_updated_at >= current_date - interval '3 day'
         ORDER BY comp_id
+        LIMIT 10
     '''
     cursor.execute(query)
     logging.info(query)
@@ -812,8 +813,8 @@ def upsert_product_checkins(customer_data):
                 logging.info(f'{cursor.rowcount} rows')
 
 
-@task_group(group_id="upsert_tables")
-def upsert_tables(customers):
+@task_group(group_id="upsert_group_1")
+def upsert_group_1(customers):
     upsert_brands.expand(customer_data=customers)
     upsert_company_config.expand(customer_data=customers)
     upsert_discounts.expand(customer_data=customers)
@@ -824,6 +825,10 @@ def upsert_tables(customers):
     upsert_product_filter_index.expand(customer_data=customers)
     upsert_product_transactions.expand(customer_data=customers)
     upsert_product_vendors.expand(customer_data=customers)
+    
+
+@task_group(group_id="upsert_group_2")
+def upsert_group_2(customers):
     upsert_products.expand(customer_data=customers)
     upsert_register_log.expand(customer_data=customers)
     upsert_register.expand(customer_data=customers)
@@ -833,9 +838,8 @@ def upsert_tables(customers):
     upsert_warehouse_orders.expand(customer_data=customers)
 
 
-
 with DAG(
-    dag_id='update_everything',
+    dag_id='update_everything_new',
     schedule='0 8 * * *', # UTC time
     start_date=datetime(year=2022, month=12, day=8),
     default_args=default_args,
@@ -861,4 +865,4 @@ with DAG(
         profiles_dir="/home/ubuntu/.dbt",
     )
 
-    upsert_tables(get_customers()) >> dbt_run >> dbt_test
+    upsert_group_1(get_customers()) >> upsert_group_2(get_customers()) >> dbt_run >> dbt_test
