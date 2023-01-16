@@ -32,9 +32,8 @@ def get_customers():
         FROM test.int_customers
         INNER JOIN svv_external_schemas
         ON int_customers.db_name = svv_external_schemas.databasename
-        WHERE int_customers.potify_sync_entity_updated_at >= current_date - interval '1 day'
+        WHERE int_customers.potify_sync_entity_updated_at >= current_date - interval '3 day'
         ORDER BY comp_id
-        LIMIT 10
     '''
     cursor.execute(query)
     logging.info(query)
@@ -944,7 +943,7 @@ def upsert_product_checkins(customers):
 
 
 with DAG(
-    dag_id='update_everything',
+    dag_id='update_everything_new',
     schedule_interval='0 8 * * *', # UTC time
     start_date=datetime(year=2022, month=12, day=8),
     default_args=default_args,
