@@ -67,6 +67,7 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'on_failure_callback': task_fail_slack_alert,
+    'on_retry_callback': task_fail_slack_alert,
     'retries': 10,
     'retry_delay': timedelta(minutes=1)
 }
