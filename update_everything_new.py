@@ -6,17 +6,45 @@ from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
 from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator
 import logging
 from airflow.decorators import task
+from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
+from airflow.hooks.base import BaseHook
 
 
-default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'email': ['i.plotnikov@telemedicine.ge', 'd.prokopev@telemedicine.ge'],
-    'email_on_failure': True,
-    'email_on_retry': True,
-    'retries': 10,
-    'retry_delay': timedelta(minutes=1)
-}
+
+def fail_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection('slack').password
+    slack_msg = f"""
+        :red_circle: Failed
+        *Task*: {context.get('task_instance').task_id}
+        *Dag*: {context.get('task_instance').dag_id}
+        *Execution Time*: {context.get('execution_date')}
+        *Log Url*: {context.get('task_instance').log_url}
+    """
+    failed_alert = SlackWebhookOperator(
+        task_id='slack_test',
+        http_conn_id='slack',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        username='airflow')
+    return failed_alert.execute(context=context)
+
+
+def retry_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection('slack').password
+    slack_msg = f"""
+        :yellow_circle: Retry
+        *Task*: {context.get('task_instance').task_id}
+        *Dag*: {context.get('task_instance').dag_id}
+        *Execution Time*: {context.get('execution_date')}
+        *Log Url*: {context.get('task_instance').log_url}
+    """
+    failed_alert = SlackWebhookOperator(
+        task_id='slack_test',
+        http_conn_id='slack',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        username='airflow')
+    return failed_alert.execute(context=context)
 
 
 @task
@@ -942,6 +970,15 @@ def upsert_product_checkins(customers):
             redshift_conn.commit()
             logging.info(f'Task is finished for company {comp_id}')
 
+
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'on_failure_callback': fail_slack_alert,
+    'on_retry_callback': retry_slack_alert,
+    'retries': 10,
+    'retry_delay': timedelta(minutes=1)
+}
 
 
 with DAG(

@@ -10,31 +10,33 @@ from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
 from airflow.hooks.base import BaseHook
 
 
+def fail_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection('slack').password
+    slack_msg = f"""
+        :red_circle: Failed
+        *Task*: {context.get('task_instance').task_id}
+        *Dag*: {context.get('task_instance').dag_id}
+        *Execution Time*: {context.get('execution_date')}
+        *Log Url*: {context.get('task_instance').log_url}
+    """
+    failed_alert = SlackWebhookOperator(
+        task_id='slack_test',
+        http_conn_id='slack',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        username='airflow')
+    return failed_alert.execute(context=context)
 
 
-SLACK_CONN_ID = 'slack'
-
-
-def task_fail_slack_alert(context):
-    slack_webhook_token = BaseHook.get_connection(SLACK_CONN_ID).password
-    slack_msg = """
-            :red_circle: Task Failed.
-            <@C04JTDR8Z6H>  
-            *Task*: {task}  
-            *Dag*: {dag} 
-            *Execution Time*: {exec_date}  
-            *gsutil URI*: {gsutil_URI} 
-            """.format(
-            task=context.get('task_instance').task_id,
-            dag=context.get('task_instance').dag_id,
-            ti=context.get('task_instance'),
-            exec_date=context.get('execution_date'),
-            gsutil_URI="gs://swift-airflow-gs/airflow/logs/{0}/{1}/{2}/{3}.log".format(
-                context.get('task_instance').dag_id, 
-                context.get('task_instance').task_id, 
-                context.get('task_instance').execution_date,
-                context.get('task_instance').prev_attempted_tries)
-            )
+def retry_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection('slack').password
+    slack_msg = f"""
+        :yellow_circle: Retry
+        *Task*: {context.get('task_instance').task_id}
+        *Dag*: {context.get('task_instance').dag_id}
+        *Execution Time*: {context.get('execution_date')}
+        *Log Url*: {context.get('task_instance').log_url}
+    """
     failed_alert = SlackWebhookOperator(
         task_id='slack_test',
         http_conn_id='slack',
@@ -66,8 +68,8 @@ def get_customers():
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'on_failure_callback': task_fail_slack_alert,
-    'on_retry_callback': task_fail_slack_alert,
+    'on_failure_callback': fail_slack_alert,
+    'on_retry_callback': retry_slack_alert,
     'retries': 10,
     'retry_delay': timedelta(minutes=1)
 }
