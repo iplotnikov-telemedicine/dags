@@ -31,7 +31,7 @@ def fail_slack_alert(context):
 def retry_slack_alert(context):
     slack_webhook_token = BaseHook.get_connection('slack').password
     slack_msg = f"""
-        :yellow_circle: Retry
+        :large_yellow_circle: Retry
         *Task*: {context.get('task_instance').task_id}
         *Dag*: {context.get('task_instance').dag_id}
         *Execution Time*: {context.get('execution_date')}
