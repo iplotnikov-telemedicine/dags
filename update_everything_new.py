@@ -995,7 +995,6 @@ default_args = {
     'depends_on_past': False,
     'on_failure_callback': failure_slack_alert,
     'on_retry_callback': retry_slack_alert,
-    'on_success_callback': success_slack_alert,
     'retries': 10,
     'retry_delay': timedelta(minutes=1)
 }
