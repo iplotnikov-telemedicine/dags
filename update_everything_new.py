@@ -8,25 +8,26 @@ import logging
 from airflow.decorators import task
 from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
 from airflow.hooks.base import BaseHook
+from airflow.operators.empty import EmptyOperator
 
 
 
-def fail_slack_alert(context):
+def failure_slack_alert(context):
     slack_webhook_token = BaseHook.get_connection('slack').password
     slack_msg = f"""
-        :red_circle: Failed
+        :red_circle: Failure
         *Task*: {context.get('task_instance').task_id}
         *Dag*: {context.get('task_instance').dag_id}
         *Execution Time*: {context.get('execution_date')}
         *Log Url*: {context.get('task_instance').log_url}
     """
-    failed_alert = SlackWebhookOperator(
+    alert = SlackWebhookOperator(
         task_id='slack_test',
         http_conn_id='slack',
         webhook_token=slack_webhook_token,
         message=slack_msg,
         username='airflow')
-    return failed_alert.execute(context=context)
+    return alert.execute(context=context)
 
 
 def retry_slack_alert(context):
@@ -38,13 +39,31 @@ def retry_slack_alert(context):
         *Execution Time*: {context.get('execution_date')}
         *Log Url*: {context.get('task_instance').log_url}
     """
-    failed_alert = SlackWebhookOperator(
+    alert = SlackWebhookOperator(
         task_id='slack_test',
         http_conn_id='slack',
         webhook_token=slack_webhook_token,
         message=slack_msg,
         username='airflow')
-    return failed_alert.execute(context=context)
+    return alert.execute(context=context)
+
+
+def success_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection('slack').password
+    slack_msg = f"""
+        :large_green_circle: Success
+        *Dag*: {context.get('task_instance').dag_id}
+        *Run ID*: {context.get('task_instance').run_id}
+        *Execution Time*: {context.get('execution_date')}
+        *Log Url*: {context.get('task_instance').log_url}
+    """
+    alert = SlackWebhookOperator(
+        task_id='slack_test',
+        http_conn_id='slack',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        username='airflow')
+    return alert.execute(context=context)
 
 
 @task
@@ -974,8 +993,9 @@ def upsert_product_checkins(customers):
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'on_failure_callback': fail_slack_alert,
+    'on_failure_callback': failure_slack_alert,
     'on_retry_callback': retry_slack_alert,
+    'on_success_callback': success_slack_alert,
     'retries': 10,
     'retry_delay': timedelta(minutes=1)
 }
@@ -1089,6 +1109,7 @@ with DAG(
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
     )
+    success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
     [task_upsert_brands, 
         task_upsert_company_config, 
         task_upsert_discounts, 
@@ -1107,4 +1128,4 @@ with DAG(
         task_upsert_tax_payment,
         task_upsert_warehouse_orders,
         task_upsert_warehouse_order_items,
-    ] >> dbt_run >> dbt_test
+    ] >> dbt_run >> dbt_test >> success_alert
