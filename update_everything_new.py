@@ -5,11 +5,28 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
 from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator
 import logging
-from airflow.decorators import task
+from airflow.decorators import task, task_group
 from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
 
+
+def start_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection('slack').password
+    slack_msg = f"""
+        :rocket: Start
+        *Dag*: {context.get('task_instance').dag_id}
+        *Run ID*: {context.get('task_instance').run_id}
+        *Execution Time*: {context.get('execution_date')}
+        *Log Url*: {context.get('task_instance').log_url}
+    """
+    alert = SlackWebhookOperator(
+        task_id='slack_test',
+        http_conn_id='slack',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        username='airflow')
+    return alert.execute(context=context)
 
 
 def failure_slack_alert(context):
@@ -89,6 +106,7 @@ def get_customers():
     return data
 
 
+@task
 def upsert_brands(customers):
     if not customers:
         raise Exception('No customers found')
@@ -140,6 +158,7 @@ def upsert_brands(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_company_config(customers):
     if not customers:
         raise Exception('No customers found')
@@ -170,6 +189,7 @@ def upsert_company_config(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_discounts(customers):
     if not customers:
         raise Exception('No customers found')
@@ -227,6 +247,7 @@ def upsert_discounts(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_patient_group_ref(customers):
     if not customers:
         raise Exception('No customers found')
@@ -278,6 +299,7 @@ def upsert_patient_group_ref(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_patient_group(customers):
     if not customers:
         raise Exception('No customers found')
@@ -329,6 +351,7 @@ def upsert_patient_group(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_patients(customers):
     if not customers:
         raise Exception('No customers found')
@@ -399,6 +422,7 @@ def upsert_patients(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_product_categories(customers):
     if not customers:
         raise Exception('No customers found')
@@ -430,6 +454,9 @@ def upsert_product_categories(customers):
                 logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
             redshift_conn.commit()
             logging.info(f'Task is finished for company {comp_id}')
+
+
+@task
 def upsert_product_filter_index(customers):
     if not customers:
         raise Exception('No customers found')
@@ -458,6 +485,9 @@ def upsert_product_filter_index(customers):
                 logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
             redshift_conn.commit()
             logging.info(f'Task is finished for company {comp_id}')
+
+
+@task
 def upsert_product_transactions(customers):
     if not customers:
         raise Exception('No customers found')
@@ -491,6 +521,7 @@ def upsert_product_transactions(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_product_vendors(customers):
     if not customers:
         raise Exception('No customers found')
@@ -544,6 +575,7 @@ def upsert_product_vendors(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_products(customers):
     if not customers:
         raise Exception('No customers found')
@@ -616,6 +648,7 @@ def upsert_products(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_register_log(customers):
     if not customers:
         raise Exception('No customers found')
@@ -648,6 +681,7 @@ def upsert_register_log(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_register(customers):
     if not customers:
         raise Exception('No customers found')
@@ -707,6 +741,7 @@ def upsert_register(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_tax_payment(customers):
     if not customers:
         raise Exception('No customers found')
@@ -763,6 +798,7 @@ def upsert_tax_payment(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_warehouse_orders(customers):
     if not customers:
         raise Exception('No customers found')
@@ -829,6 +865,7 @@ def upsert_warehouse_orders(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_warehouse_order_items(customers):
     if not customers:
         raise Exception('No customers found')
@@ -887,6 +924,7 @@ def upsert_warehouse_order_items(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_service_history(customers):
     if not customers:
         raise Exception('No customers found')
@@ -944,6 +982,7 @@ def upsert_service_history(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task
 def upsert_product_checkins(customers):
     if not customers:
         raise Exception('No customers found')
@@ -1001,6 +1040,28 @@ def upsert_product_checkins(customers):
             logging.info(f'Task is finished for company {comp_id}')
 
 
+@task_group
+def upsert_tables(customers):
+    upsert_brands(customers) 
+    upsert_company_config(customers) 
+    upsert_discounts(customers) 
+    upsert_patient_group_ref(customers)
+    upsert_patient_group(customers)
+    upsert_patients(customers)
+    upsert_product_categories(customers)
+    upsert_product_checkins(customers)
+    upsert_product_filter_index(customers)
+    upsert_product_transactions(customers)
+    upsert_product_vendors(customers)
+    upsert_products(customers)
+    upsert_register_log(customers)
+    upsert_register(customers)
+    upsert_service_history(customers)
+    upsert_tax_payment(customers)
+    upsert_warehouse_orders(customers)
+    upsert_warehouse_order_items(customers)
+
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -1013,102 +1074,13 @@ default_args = {
 
 with DAG(
     dag_id='update_everything_new',
-    schedule_interval='0 8 * * *', # UTC time
+    schedule='0 8 * * *', # UTC time
     start_date=datetime(year=2022, month=12, day=8),
     default_args=default_args,
     catchup=False,
 ) as dag:
+    start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
     customers = get_customers()
-    task_upsert_brands = PythonOperator(
-        task_id='upsert_brands',
-        python_callable=upsert_brands,
-        op_args=[customers]
-    )
-    task_upsert_company_config = PythonOperator(
-        task_id='upsert_company_config',
-        python_callable=upsert_company_config,
-        op_args=[customers]
-    )
-    task_upsert_discounts = PythonOperator(
-        task_id='upsert_discounts',
-        python_callable=upsert_discounts,
-        op_args=[customers]
-    )
-    task_upsert_patient_group_ref = PythonOperator(
-        task_id='upsert_patient_group_ref',
-        python_callable=upsert_patient_group_ref,
-        op_args=[customers]
-    )
-    task_upsert_patient_group = PythonOperator(
-        task_id='upsert_patient_group',
-        python_callable=upsert_patient_group,
-        op_args=[customers]
-    )
-    task_upsert_patients = PythonOperator(
-        task_id='upsert_patients',
-        python_callable=upsert_patients,
-        op_args=[customers]
-    )
-    task_upsert_product_categories = PythonOperator(
-        task_id='upsert_product_categories',
-        python_callable=upsert_product_categories,
-        op_args=[customers]
-    )
-    task_upsert_product_filter_index = PythonOperator(
-        task_id='upsert_product_filter_index',
-        python_callable=upsert_product_filter_index,
-        op_args=[customers]
-    )
-    task_upsert_product_transactions = PythonOperator(
-        task_id='upsert_product_transactions',
-        python_callable=upsert_product_transactions,
-        op_args=[customers]
-    )
-    task_upsert_product_vendors = PythonOperator(
-        task_id='upsert_product_vendors',
-        python_callable=upsert_product_vendors,
-        op_args=[customers]
-    )
-    task_upsert_products = PythonOperator(
-        task_id='upsert_products',
-        python_callable=upsert_products,
-        op_args=[customers]
-    )
-    task_upsert_register_log = PythonOperator(
-        task_id='upsert_register_log',
-        python_callable=upsert_register_log,
-        op_args=[customers]
-    )
-    task_upsert_register = PythonOperator(
-        task_id='upsert_register',
-        python_callable=upsert_register,
-        op_args=[customers]
-    )
-    task_upsert_service_history = PythonOperator(
-        task_id='upsert_service_history',
-        python_callable=upsert_service_history,
-        op_args=[customers]
-    )
-    task_upsert_tax_payment = PythonOperator(
-        task_id='upsert_tax_payment',
-        python_callable=upsert_tax_payment,
-        op_args=[customers]
-    )
-    task_upsert_warehouse_orders = PythonOperator(
-        task_id='upsert_warehouse_orders',
-        python_callable=upsert_warehouse_orders,
-        op_args=[customers]
-    )
-    task_upsert_warehouse_order_items = PythonOperator(
-        task_id='upsert_warehouse_order_items',
-        python_callable=upsert_warehouse_order_items,
-        op_args=[customers]
-    )
-    task_upsert_product_checkins = PythonOperator(
-        task_id='upsert_product_checkins',
-        python_callable=upsert_product_checkins,
-        op_args=[customers]
-    )
     dbt_run = DbtRunOperator(
         task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
@@ -1120,22 +1092,4 @@ with DAG(
         profiles_dir="/home/ubuntu/.dbt",
     )
     success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
-    [task_upsert_brands, 
-        task_upsert_company_config, 
-        task_upsert_discounts, 
-        task_upsert_patient_group_ref,
-        task_upsert_patient_group,
-        task_upsert_patients,
-        task_upsert_product_categories,
-        task_upsert_product_checkins,
-        task_upsert_product_filter_index,
-        task_upsert_product_transactions,
-        task_upsert_product_vendors,
-        task_upsert_products,
-        task_upsert_register_log,
-        task_upsert_register,
-        task_upsert_service_history,
-        task_upsert_tax_payment,
-        task_upsert_warehouse_orders,
-        task_upsert_warehouse_order_items,
-    ] >> dbt_run >> dbt_test >> success_alert
+    start_alert >> customers >> upsert_tables(customers) >> dbt_run >> dbt_test >> success_alert 
