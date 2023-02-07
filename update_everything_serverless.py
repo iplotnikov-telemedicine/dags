@@ -1094,4 +1094,4 @@ with DAG(
         profiles_dir="/home/ubuntu/.dbt",
     )
     success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
-    start_alert >> upsert_tables(get_customers()) >> dbt_run >> dbt_test >> success_alert 
+    start_alert >> upsert_tables(get_customers()) >> dbt_run >> dbt_test >> success_alert

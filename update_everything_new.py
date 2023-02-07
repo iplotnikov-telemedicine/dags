@@ -1080,7 +1080,6 @@ with DAG(
     catchup=False,
 ) as dag:
     start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
-    customers = get_customers()
     dbt_run = DbtRunOperator(
         task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
