@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from airflow.models import DAG
-from airflow.operators.python import PythonOperator
+# from airflow.operators.python import PythonOperator
 # from airflow.providers.amazon.aws.operators.redshift_sql import RedshiftSQLOperator
 from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
 from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator
@@ -86,7 +86,7 @@ def success_slack_alert(context):
 @task
 def get_customers():
     redshift_hook = RedshiftSQLHook(
-        postgres_conn_id='redshift_default',
+        postgres_conn_id='redshift_serverless',
         schema='dev'
     )
     redshift_conn = redshift_hook.get_conn()
@@ -112,7 +112,7 @@ def upsert_brands(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'    
             )
         redshift_conn = redshift_hook.get_conn()
@@ -164,7 +164,7 @@ def upsert_company_config(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -195,7 +195,7 @@ def upsert_discounts(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -253,7 +253,7 @@ def upsert_patient_group_ref(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -305,7 +305,7 @@ def upsert_patient_group(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -357,7 +357,7 @@ def upsert_patients(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -428,7 +428,7 @@ def upsert_product_categories(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -462,7 +462,7 @@ def upsert_product_filter_index(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -493,7 +493,7 @@ def upsert_product_transactions(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -527,7 +527,7 @@ def upsert_product_vendors(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -581,7 +581,7 @@ def upsert_products(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -654,7 +654,7 @@ def upsert_register_log(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -687,7 +687,7 @@ def upsert_register(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -747,7 +747,7 @@ def upsert_tax_payment(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -804,7 +804,7 @@ def upsert_warehouse_orders(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -871,7 +871,7 @@ def upsert_warehouse_order_items(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -930,7 +930,7 @@ def upsert_service_history(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -988,7 +988,7 @@ def upsert_product_checkins(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                postgres_conn_id='redshift_serverless',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -1073,23 +1073,25 @@ default_args = {
 
 
 with DAG(
-    dag_id='update_everything_new',
+    dag_id='update_everything_serverless',
+    max_active_tasks=32,
     schedule='0 8 * * *', # UTC time
-    start_date=datetime(year=2022, month=12, day=8),
+    start_date=datetime(year=2023, month=2, day=8),
     default_args=default_args,
     catchup=False,
 ) as dag:
     start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
-    customers = get_customers()
     dbt_run = DbtRunOperator(
         task_id="dbt_run",
+        target="redshift_serverless",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
     )
     dbt_test = DbtTestOperator(
         task_id="dbt_test",
+        target="redshift_serverless",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
     )
     success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
-    start_alert >> upsert_tables(get_customers()) >> dbt_run >> dbt_test >> success_alert
+    start_alert >> upsert_tables(get_customers()) >> dbt_run >> dbt_test >> success_alert 
