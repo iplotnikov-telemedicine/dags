@@ -1076,7 +1076,7 @@ with DAG(
     dag_id='update_everything_serverless',
     max_active_tasks=32,
     schedule='0 8 * * *', # UTC time
-    start_date=datetime(year=2023, month=2, day=8),
+    start_date=datetime(year=2023, month=2, day=7),
     default_args=default_args,
     catchup=False,
 ) as dag:
