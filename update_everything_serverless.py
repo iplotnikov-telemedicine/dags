@@ -1086,14 +1086,14 @@ with DAG(
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
         profile="indica",
-        target="redshift_serverless"
+        target="test"
     )
     dbt_test = DbtTestOperator(
         task_id="dbt_test",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
         profile="indica",
-        target="redshift_serverless"
+        target="test"
     )
     success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
     start_alert >> upsert_tables(get_customers()) >> dbt_run >> dbt_test >> success_alert
