@@ -86,7 +86,7 @@ def success_slack_alert(context):
 @task
 def get_customers():
     redshift_hook = RedshiftSQLHook(
-        postgres_conn_id='redshift_default',
+        redshift_conn_id='redshift_default',
         schema='dev'
     )
     redshift_conn = redshift_hook.get_conn()
@@ -112,7 +112,7 @@ def upsert_brands(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'    
             )
         redshift_conn = redshift_hook.get_conn()
@@ -164,7 +164,7 @@ def upsert_company_config(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -195,7 +195,7 @@ def upsert_discounts(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -253,7 +253,7 @@ def upsert_patient_group_ref(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -305,7 +305,7 @@ def upsert_patient_group(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -357,7 +357,7 @@ def upsert_patients(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -428,7 +428,7 @@ def upsert_product_categories(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -462,7 +462,7 @@ def upsert_product_filter_index(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -493,7 +493,7 @@ def upsert_product_transactions(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -527,7 +527,7 @@ def upsert_product_vendors(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -581,7 +581,7 @@ def upsert_products(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -654,7 +654,7 @@ def upsert_register_log(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -687,7 +687,7 @@ def upsert_register(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -747,7 +747,7 @@ def upsert_tax_payment(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -804,7 +804,7 @@ def upsert_warehouse_orders(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -871,7 +871,7 @@ def upsert_warehouse_order_items(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -930,7 +930,7 @@ def upsert_service_history(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
@@ -988,7 +988,7 @@ def upsert_product_checkins(customers):
         raise Exception('No customers found')
     else:
         redshift_hook = RedshiftSQLHook(
-                postgres_conn_id='redshift_default',
+                redshift_conn_id='redshift_default',
                 schema='dev'
             )
         redshift_conn = redshift_hook.get_conn()
