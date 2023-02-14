@@ -1048,6 +1048,38 @@ def upsert_product_checkins(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
+@task
+def upsert_product_office_qty(schema, table, **kwargs):
+    ti, task_id = kwargs['ti'], kwargs['task'].task_id
+    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
+    # get max_comp_id from target table and filter list of customers
+    max_comp_id = int(Variable.get(task_id, 0))
+    customers = [c for c in customers if c[0] > max_comp_id]
+    for comp_id, ext_schema in customers:
+        logging.info(f'Task is starting for company {comp_id}')
+        # deleting old data from target
+        query = f'''
+            DELETE FROM {schema}.{table}
+            WHERE comp_id = {comp_id}
+        '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+        # inserting new data to target
+        query = f'''
+            INSERT INTO {schema}.{table}
+            SELECT {comp_id}, poq_id, poq_prod_id, poq_office_id, poq_qty, poq_item_type, 
+                sync_created_at, sync_updated_at, reserved_qty, paused_qty
+            FROM {ext_schema}.{table}
+        '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+        # commit to target DB
+        redshift_conn.commit()
+        logging.info(f'Task is finished for company {comp_id}')
+        Variable.set(task_id, comp_id)
+    Variable.set(task_id, 0)
+
+
 @task_group
 def upsert_tables(schema='staging'):
     upsert_brands(schema, table='brands', date_column='sync_updated_at')
@@ -1059,6 +1091,7 @@ def upsert_tables(schema='staging'):
     upsert_product_categories(schema, table='product_categories')
     upsert_product_checkins(schema, table='product_checkins', date_column='sync_updated_at')
     upsert_product_filter_index(schema, table='product_filter_index')
+    upsert_product_office_qty(schema, table='product_office_qty')
     upsert_product_transactions(schema, table='product_transactions', date_column='date')
     upsert_product_vendors(schema, table='product_vendors', date_column='updated_at')
     upsert_products(schema, table='products', date_column='sync_updated_at')
