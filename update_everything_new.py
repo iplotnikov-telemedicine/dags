@@ -3,7 +3,7 @@ from airflow.models import DAG
 from airflow.operators.python import PythonOperator
 # from airflow.providers.amazon.aws.operators.redshift_sql import RedshiftSQLOperator
 from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
-from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator
+from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator, DbtSnapshotOperator
 import logging
 from airflow.decorators import task, task_group
 from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
@@ -1129,6 +1129,11 @@ with DAG(
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
     )
+    dbt_snapshot = DbtSnapshotOperator(
+        task_id="dbt_snapshot",
+        project_dir="/home/ubuntu/dbt/indica",
+        profiles_dir="/home/ubuntu/.dbt",
+    )
     dbt_test = DbtTestOperator(
         task_id="dbt_test",
         project_dir="/home/ubuntu/dbt/indica",
@@ -1136,4 +1141,4 @@ with DAG(
     )
     success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
-    start_alert >> get_customers_task >> upsert_tables_group >> dbt_run >> dbt_test >> success_alert
+    start_alert >> get_customers_task >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
