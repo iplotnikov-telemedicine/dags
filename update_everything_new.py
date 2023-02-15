@@ -1094,9 +1094,12 @@ def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
         where table_schema = '{schema}' and table_name = '{table}'
         '''
     cursor.execute(query)
-    table_exists = cursor.fetchone()[0]
-    if table_exists != 1:
+    table_exists = cursor.fetchone()
+    logging.info(f'Table exists value: {table_exists}')
+    if table_exists is None:
         # create blank table
+        comp_id = customers[0][0]
+        ext_schema = customers[0][1]
         query = f'''
             create table {schema}.{table} as
             select {comp_id} as comp_id, id, order_id, "type", sf_guard_user_id, order_courier_register_id, created_at, register_id, application
@@ -1105,6 +1108,7 @@ def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
             '''
         cursor.execute(query)
         redshift_conn.commit()
+        logging.info(f'Table {schema}.{table} created successfully')
     for comp_id, ext_schema in customers:
         logging.info(f'Task is starting for company {comp_id}')
         # inserting new data with increment to target
