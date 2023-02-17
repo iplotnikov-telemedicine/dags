@@ -885,13 +885,16 @@ def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
         # creating temp table with new data increment
         query = f'''
             CREATE temporary TABLE {table}_{comp_id}_temp as
-            SELECT *
+            SELECT {table}.*
             FROM {ext_schema}.{table}
-            WHERE {date_column} > (
+            INNER JOIN {ext_schema}.warehouse_orders
+            ON {table}.order_id = warehouse_orders.id
+            WHERE {table}.{date_column} > (
                 SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
                 FROM {schema}.{table}
                 WHERE comp_id = {comp_id}
-            ) and {date_column} < CURRENT_DATE + interval '8 hours'
+            ) and {table}.{date_column} < CURRENT_DATE + interval '8 hours'
+                and warehouse_orders.confirmed_at IS NOT NULL
         '''
         cursor.execute(query)
         logging.info(f'Temp table is created')
