@@ -885,7 +885,7 @@ def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
         # creating temp table with new data increment
         query = f'''
             CREATE temporary TABLE {table}_{comp_id}_temp as
-            SELECT {table}.*
+            SELECT {table}.*, warehouse_orders.confirmed_at
             FROM {ext_schema}.{table}
             INNER JOIN {ext_schema}.warehouse_orders
             ON {table}.order_id = warehouse_orders.id
@@ -917,7 +917,7 @@ def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
                 discount_type, free_amount, paid_amount, wcii_cart_item, sync_created_at, sync_updated_at, 
                 product_checkin_id, is_excise, returned_at, is_marijuana_product, product_is_tax_exempt, 
                 is_metrc, is_under_package_control, base_amount, discount_id, delivery_tax, discount_count, 
-                is_exchanged, exchanged_at, product_brutto_weight, product_brutto_weight_validation
+                is_exchanged, exchanged_at, product_brutto_weight, product_brutto_weight_validation, confirmed_at
             FROM {table}_{comp_id}_temp
         '''
         cursor.execute(query)
