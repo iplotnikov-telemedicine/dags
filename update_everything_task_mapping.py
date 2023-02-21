@@ -1194,7 +1194,7 @@ default_args = {
 with DAG(
     dag_id='update_everything_task_mapping',
     max_active_tasks=8,
-    schedule='0 8 * * *', # UTC time
+    schedule=None, #'0 8 * * *', # UTC time
     start_date=datetime(year=2022, month=12, day=8),
     default_args=default_args,
     catchup=False,
