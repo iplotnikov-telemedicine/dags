@@ -112,7 +112,7 @@ def get_customers(ti=None):
     return data
 
 
-@task(max_active_tis_per_dag=2)
+@task(max_active_tis_per_dag=1)
 # @task()
 def upsert_brands(customer_data, schema, table, date_column):
     (comp_id, ext_schema) = customer_data
