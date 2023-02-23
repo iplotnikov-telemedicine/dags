@@ -749,6 +749,65 @@ def upsert_register(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
+
+@task
+def upsert_sf_guard_user(schema, table, date_column, **kwargs):
+    ti, task_id = kwargs['ti'], kwargs['task'].task_id
+    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
+    # get max_comp_id from target table and filter list of customers
+    max_comp_id = int(Variable.get(task_id, 0))
+    customers = [c for c in customers if c[0] > max_comp_id]
+    for comp_id, ext_schema in customers:
+        logging.info(f'Task is starting for company {comp_id}')
+        # creating temp table with new data increment
+        query = f'''
+            CREATE temporary TABLE {table}_{comp_id}_temp as
+            SELECT *
+            FROM {ext_schema}.{table}
+            WHERE {date_column} > (
+                SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+                FROM {schema}.{table}
+                WHERE comp_id = {comp_id}
+            ) and {date_column} < CURRENT_DATE + interval '8 hours'
+        '''
+        cursor.execute(query)
+        logging.info(f'Temp table is created')
+        # deleting from target table data that were updated
+        query = f'''
+            DELETE FROM {schema}.{table}
+            USING {table}_{comp_id}_temp
+            WHERE {schema}.{table}.comp_id = {comp_id}
+                AND {schema}.{table}.id = {table}_{comp_id}_temp.id
+        '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+        # inserting increment to target table
+        query = f'''
+            INSERT INTO {schema}.{table}
+            SELECT {comp_id}, id, staff_category_id, first_name, last_name, last_office, email_address, username, photo, dmv, 
+                address, mobile_phone, phone, algorithm, "type", is_admin, access_type, office_access, is_active, is_super_admin, 
+                last_login, timetracker_autocheckout_time, timetracker_hour_rate, created_at, updated_at, patient_id, is_verified, 
+                is_dmv_verified, whmcs_clientid, whmcs_email, whmcs_password, user_pin, manager_pin, autologin_hash, trial_title, 
+                trial_indica_description, trial_medibook_description, trial_photo_url, is_trial_support, sync_created_at, sync_updated_at, 
+                wcii_hash, agilecrm_contact_id, deleted_at, storage_access, staff_id, driver_license_number, occupational_driver_license, 
+                external_id, potify_driver_id, current_timestamp as inserted_at
+            FROM {table}_{comp_id}_temp
+        '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+        # deleting temp table
+        query = f'''
+            DROP TABLE {table}_{comp_id}_temp
+        '''
+        cursor.execute(query)
+        logging.info(f'Temp table is dropped')
+        # commit to target DB
+        redshift_conn.commit()
+        logging.info(f'Task is finished for company {comp_id}')
+        Variable.set(task_id, comp_id)
+    Variable.set(task_id, 0)
+
+
 @task
 def upsert_tax_payment(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
@@ -1153,6 +1212,7 @@ def upsert_tables(schema='staging'):
     upsert_register_log(schema, table='register_log', date_column='created_at')
     upsert_register(schema, table='register', date_column='updated_at')
     upsert_service_history(schema, table='service_history', date_column='updated_at')
+    upsert_sf_guard_user(schema, table='sf_guard_user', date_column='updated_at')
     upsert_tax_payment(schema, table='tax_payment', date_column='updated_at')
     upsert_warehouse_orders(schema, table='warehouse_orders', date_column='updated_at')
     upsert_warehouse_order_items(schema, table='warehouse_order_items', date_column='updated_at')
