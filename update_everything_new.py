@@ -94,14 +94,19 @@ def success_slack_alert(context):
 
 
 @task
-def get_customers(ti=None):
+def get_customers(ti=None, **kwargs):
+    comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+    if comp_id_list:
+        condition = f"int_customers.comp_id IN ({', '.join(list(map(str, comp_id_list)))})"
+    else:
+        condition = "int_customers.potify_sync_entity_updated_at >= current_date - interval '3 day'"
     cursor = redshift_conn.cursor()
-    query = '''
+    query = f'''
         SELECT int_customers.comp_id, TRIM(svv_external_schemas.schemaname) as schemaname
         FROM test.int_customers
         INNER JOIN svv_external_schemas
         ON int_customers.db_name = svv_external_schemas.databasename
-        WHERE int_customers.potify_sync_entity_updated_at >= current_date - interval '3 day'
+        WHERE {condition}
         ORDER BY comp_id
     '''
     cursor.execute(query)
@@ -1225,7 +1230,7 @@ default_args = {
     'on_failure_callback': failure_slack_alert,
     'on_retry_callback': retry_slack_alert,
     'retries': 10,
-    'retry_delay': timedelta(seconds=30)
+    'retry_delay': timedelta(seconds=60)
 }
 
 
