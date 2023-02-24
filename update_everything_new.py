@@ -1169,7 +1169,7 @@ def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
         ext_schema = customers[0][1]
         query = f'''
             create table {schema}.{table} as
-            select {comp_id} as comp_id, id, order_id, "type", sf_guard_user_id, order_courier_register_id, created_at, register_id, application
+            select {comp_id} as comp_id, id, order_id, "type", sf_guard_user_id, sf_guard_user_name, order_courier_register_id, created_at, register_id, application, current_timestamp as inserted_at
             from {ext_schema}.{table}
             where 1 != 1
             '''
@@ -1181,7 +1181,7 @@ def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
         # inserting new data with increment to target
         query = f'''
             INSERT INTO {schema}.{table}
-            SELECT {comp_id} as comp_id, id, order_id, "type", sf_guard_user_id, order_courier_register_id, created_at, register_id, application, current_timestamp as inserted_at
+            SELECT {comp_id} as comp_id, id, order_id, "type", sf_guard_user_id, sf_guard_user_name, order_courier_register_id, created_at, register_id, application, current_timestamp as inserted_at
             FROM {ext_schema}.{table}
             WHERE
                 {date_column} > (
