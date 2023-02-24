@@ -105,7 +105,7 @@ def get_customers(ti=None, **kwargs):
         SELECT int_customers.comp_id, TRIM(svv_external_schemas.schemaname) as schemaname
         FROM test.int_customers
         INNER JOIN svv_external_schemas
-        ON int_customers.db_name = svv_external_schemas.databasename
+        ON int_customers.comp_db_name = svv_external_schemas.databasename
         WHERE {condition}
         ORDER BY comp_id
     '''
