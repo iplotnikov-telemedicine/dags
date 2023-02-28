@@ -1199,6 +1199,162 @@ def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
+@task
+def upsert_user_activity_record(schema, table, date_column, **kwargs):
+    ti, task_id = kwargs['ti'], kwargs['task'].task_id
+    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
+    # get max_comp_id from target table and filter list of customers
+    max_comp_id = int(Variable.get(task_id, 0))
+    customers = [c for c in customers if c[0] > max_comp_id]
+    # check if table not exists
+    query = f'''
+        select 1
+        from information_schema.tables
+        where table_schema = '{schema}' and table_name = '{table}'
+        '''
+    cursor.execute(query)
+    table_exists = cursor.fetchone()
+    logging.info(f'Table exists value: {table_exists}')
+    if table_exists is None:
+        # create blank table
+        comp_id = customers[0][0]
+        ext_schema = customers[0][1]
+        query = f'''
+            create table {schema}.{table} as
+            select {comp_id} as comp_id, id, sf_guard_user_id, "type", description, ip, created_at, updated_at, current_timestamp as inserted_at
+            from {ext_schema}.{table}
+            where 1 != 1
+            '''
+        cursor.execute(query)
+        redshift_conn.commit()
+        logging.info(f'Table {schema}.{table} created successfully')
+    for comp_id, ext_schema in customers:
+        logging.info(f'Task is starting for company {comp_id}')
+        # inserting new data with increment to target
+        query = f'''
+            INSERT INTO {schema}.{table}
+            SELECT {comp_id} as comp_id, id, sf_guard_user_id, "type", description, ip, created_at, updated_at, current_timestamp as inserted_at
+            FROM {ext_schema}.{table}
+            WHERE
+                {date_column} > (
+                    SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+                    FROM {schema}.{table}
+                    WHERE comp_id = {comp_id} 
+                ) AND {date_column} < CURRENT_DATE + interval '8 hours'
+            '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+        # commit to target DB
+        redshift_conn.commit()
+        logging.info(f'Task is finished for company {comp_id}')
+        Variable.set(task_id, comp_id)
+    Variable.set(task_id, 0)
+
+
+@task
+def upsert_sf_guard_user_group(schema, table, date_column, **kwargs):
+    ti, task_id = kwargs['ti'], kwargs['task'].task_id
+    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
+    # get max_comp_id from target table and filter list of customers
+    max_comp_id = int(Variable.get(task_id, 0))
+    customers = [c for c in customers if c[0] > max_comp_id]
+    # check if table not exists
+    query = f'''
+        select 1
+        from information_schema.tables
+        where table_schema = '{schema}' and table_name = '{table}'
+        '''
+    cursor.execute(query)
+    table_exists = cursor.fetchone()
+    logging.info(f'Table exists value: {table_exists}')
+    if table_exists is None:
+        # create blank table
+        comp_id = customers[0][0]
+        ext_schema = customers[0][1]
+        query = f'''
+            create table {schema}.{table} as
+            select {comp_id} as comp_id, user_id, group_id, created_at, updated_at, current_timestamp as inserted_at
+            from {ext_schema}.{table}
+            where 1 != 1
+            '''
+        cursor.execute(query)
+        redshift_conn.commit()
+        logging.info(f'Table {schema}.{table} created successfully')
+    for comp_id, ext_schema in customers:
+        logging.info(f'Task is starting for company {comp_id}')
+        # inserting new data with increment to target
+        query = f'''
+            INSERT INTO {schema}.{table}
+            SELECT {comp_id} as comp_id, user_id, group_id, created_at, updated_at, current_timestamp as inserted_at
+            FROM {ext_schema}.{table}
+            WHERE
+                {date_column} > (
+                    SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+                    FROM {schema}.{table}
+                    WHERE comp_id = {comp_id} 
+                ) AND {date_column} < CURRENT_DATE + interval '8 hours'
+            '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+        # commit to target DB
+        redshift_conn.commit()
+        logging.info(f'Task is finished for company {comp_id}')
+        Variable.set(task_id, comp_id)
+    Variable.set(task_id, 0)
+
+
+@task
+def upsert_sf_guard_group(schema, table, date_column, **kwargs):
+    ti, task_id = kwargs['ti'], kwargs['task'].task_id
+    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
+    # get max_comp_id from target table and filter list of customers
+    max_comp_id = int(Variable.get(task_id, 0))
+    customers = [c for c in customers if c[0] > max_comp_id]
+    # check if table not exists
+    query = f'''
+        select 1
+        from information_schema.tables
+        where table_schema = '{schema}' and table_name = '{table}'
+        '''
+    cursor.execute(query)
+    table_exists = cursor.fetchone()
+    logging.info(f'Table exists value: {table_exists}')
+    if table_exists is None:
+        # create blank table
+        comp_id = customers[0][0]
+        ext_schema = customers[0][1]
+        query = f'''
+            create table {schema}.{table} as
+            select {comp_id} as comp_id, id, "name", description, is_main, created_at, updated_at, current_timestamp as inserted_at
+            from {ext_schema}.{table}
+            where 1 != 1
+            '''
+        cursor.execute(query)
+        redshift_conn.commit()
+        logging.info(f'Table {schema}.{table} created successfully')
+    for comp_id, ext_schema in customers:
+        logging.info(f'Task is starting for company {comp_id}')
+        # inserting new data with increment to target
+        query = f'''
+            INSERT INTO {schema}.{table}
+            SELECT {comp_id} as comp_id, id, "name", description, is_main, created_at, updated_at, current_timestamp as inserted_at
+            FROM {ext_schema}.{table}
+            WHERE
+                {date_column} > (
+                    SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+                    FROM {schema}.{table}
+                    WHERE comp_id = {comp_id} 
+                ) AND {date_column} < CURRENT_DATE + interval '8 hours'
+            '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+        # commit to target DB
+        redshift_conn.commit()
+        logging.info(f'Task is finished for company {comp_id}')
+        Variable.set(task_id, comp_id)
+    Variable.set(task_id, 0)
+
+
 @task_group
 def upsert_tables(schema='staging'):
     upsert_brands(schema, table='brands', date_column='sync_updated_at')
@@ -1222,6 +1378,9 @@ def upsert_tables(schema='staging'):
     upsert_warehouse_orders(schema, table='warehouse_orders', date_column='updated_at')
     upsert_warehouse_order_items(schema, table='warehouse_order_items', date_column='updated_at')
     upsert_warehouse_order_logs(schema, table='warehouse_order_logs', date_column='created_at')
+    upsert_user_activity_record(schema, table='user_activity_record', date_column='updated_at')
+    upsert_sf_guard_user_group(schema, table='sf_guard_user_group', date_column='updated_at')
+    upsert_sf_guard_group(schema, table='sf_guard_group', date_column='updated_at')
 
 
 default_args = {
