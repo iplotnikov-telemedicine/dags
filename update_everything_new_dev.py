@@ -1,3 +1,8 @@
+# import sys
+# sys.path.insert(1, '/Users/a.bezgodov/airflow/dags/python')
+import sys
+import os
+sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 from datetime import datetime, timedelta
 from airflow.models import DAG
 from airflow.operators.python import PythonOperator
@@ -10,6 +15,7 @@ from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
 from airflow.models import Variable
+from python.to_stage import stg_load
 
 
 # Get connection to Redshift DB
@@ -21,76 +27,76 @@ redshift_conn = redshift_hook.get_conn()
 cursor = redshift_conn.cursor()
 
 
-def start_slack_alert(context):
-    slack_webhook_token = BaseHook.get_connection('slack').password
-    slack_msg = f"""
-        :rocket: Start
-        *Dag*: {context.get('task_instance').dag_id}
-        *Run ID*: {context.get('task_instance').run_id}
-        *Execution Time*: {context.get('ds')}
-        *Log Url*: {context.get('task_instance').log_url}
-    """
-    alert = SlackWebhookOperator(
-        task_id='slack_test',
-        http_conn_id='slack',
-        webhook_token=slack_webhook_token,
-        message=slack_msg,
-        username='airflow')
-    return alert.execute(context=context)
+# def start_slack_alert(context):
+#     slack_webhook_token = BaseHook.get_connection('slack').password
+#     slack_msg = f"""
+#         :rocket: Start
+#         *Dag*: {context.get('task_instance').dag_id}
+#         *Run ID*: {context.get('task_instance').run_id}
+#         *Execution Time*: {context.get('execution_date')}
+#         *Log Url*: {context.get('task_instance').log_url}
+#     """
+#     alert = SlackWebhookOperator(
+#         task_id='slack_test',
+#         http_conn_id='slack',
+#         webhook_token=slack_webhook_token,
+#         message=slack_msg,
+#         username='airflow')
+#     return alert.execute(context=context)
 
 
-def failure_slack_alert(context):
-    slack_webhook_token = BaseHook.get_connection('slack').password
-    slack_msg = f"""
-        :red_circle: Failure
-        *Task*: {context.get('task_instance').task_id}
-        *Dag*: {context.get('task_instance').dag_id}
-        *Execution Time*: {context.get('ds')}
-        *Log Url*: {context.get('task_instance').log_url}
-    """
-    alert = SlackWebhookOperator(
-        task_id='slack_test',
-        http_conn_id='slack',
-        webhook_token=slack_webhook_token,
-        message=slack_msg,
-        username='airflow')
-    return alert.execute(context=context)
+# def failure_slack_alert(context):
+#     slack_webhook_token = BaseHook.get_connection('slack').password
+#     slack_msg = f"""
+#         :red_circle: Failure
+#         *Task*: {context.get('task_instance').task_id}
+#         *Dag*: {context.get('task_instance').dag_id}
+#         *Execution Time*: {context.get('execution_date')}
+#         *Log Url*: {context.get('task_instance').log_url}
+#     """
+#     alert = SlackWebhookOperator(
+#         task_id='slack_test',
+#         http_conn_id='slack',
+#         webhook_token=slack_webhook_token,
+#         message=slack_msg,
+#         username='airflow')
+#     return alert.execute(context=context)
 
 
-def retry_slack_alert(context):
-    slack_webhook_token = BaseHook.get_connection('slack').password
-    slack_msg = f"""
-        :large_yellow_circle: Retry
-        *Task*: {context.get('task_instance').task_id}
-        *Dag*: {context.get('task_instance').dag_id}
-        *Execution Time*: {context.get('ds')}
-        *Log Url*: {context.get('task_instance').log_url}
-    """
-    alert = SlackWebhookOperator(
-        task_id='slack_test',
-        http_conn_id='slack',
-        webhook_token=slack_webhook_token,
-        message=slack_msg,
-        username='airflow')
-    return alert.execute(context=context)
+# def retry_slack_alert(context):
+#     slack_webhook_token = BaseHook.get_connection('slack').password
+#     slack_msg = f"""
+#         :large_yellow_circle: Retry
+#         *Task*: {context.get('task_instance').task_id}
+#         *Dag*: {context.get('task_instance').dag_id}
+#         *Execution Time*: {context.get('execution_date')}
+#         *Log Url*: {context.get('task_instance').log_url}
+#     """
+#     alert = SlackWebhookOperator(
+#         task_id='slack_test',
+#         http_conn_id='slack',
+#         webhook_token=slack_webhook_token,
+#         message=slack_msg,
+#         username='airflow')
+#     return alert.execute(context=context)
 
 
-def success_slack_alert(context):
-    slack_webhook_token = BaseHook.get_connection('slack').password
-    slack_msg = f"""
-        :large_green_circle: Success
-        *Dag*: {context.get('task_instance').dag_id}
-        *Run ID*: {context.get('task_instance').run_id}
-        *Execution Time*: {context.get('ds')}
-        *Log Url*: {context.get('task_instance').log_url}
-    """
-    alert = SlackWebhookOperator(
-        task_id='slack_test',
-        http_conn_id='slack',
-        webhook_token=slack_webhook_token,
-        message=slack_msg,
-        username='airflow')
-    return alert.execute(context=context)
+# def success_slack_alert(context):
+#     slack_webhook_token = BaseHook.get_connection('slack').password
+#     slack_msg = f"""
+#         :large_green_circle: Success
+#         *Dag*: {context.get('task_instance').dag_id}
+#         *Run ID*: {context.get('task_instance').run_id}
+#         *Execution Time*: {context.get('execution_date')}
+#         *Log Url*: {context.get('task_instance').log_url}
+#     """
+#     alert = SlackWebhookOperator(
+#         task_id='slack_test',
+#         http_conn_id='slack',
+#         webhook_token=slack_webhook_token,
+#         message=slack_msg,
+#         username='airflow')
+#     return alert.execute(context=context)
 
 
 @task
@@ -1230,42 +1236,20 @@ def upsert_user_activity_record(schema, table, date_column, **kwargs):
         logging.info(f'Table {schema}.{table} created successfully')
     for comp_id, ext_schema in customers:
         logging.info(f'Task is starting for company {comp_id}')
-        # creating temp table with new data increment
-        query = f'''
-            CREATE temporary TABLE {table}_{comp_id}_temp as
-            SELECT *
-            FROM {ext_schema}.{table}
-            WHERE {date_column} > (
-                SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-                FROM {schema}.{table}
-                WHERE comp_id = {comp_id}
-            ) and {date_column} < CURRENT_DATE + interval '8 hours'
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is created')
-        # deleting from target table data that were updated
-        query = f'''
-            DELETE FROM {schema}.{table}
-            USING {table}_{comp_id}_temp
-            WHERE {schema}.{table}.comp_id = {comp_id}
-                AND {schema}.{table}.id = {table}_{comp_id}_temp.id
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
-        # inserting increment to target table
+        # inserting new data with increment to target
         query = f'''
             INSERT INTO {schema}.{table}
-            SELECT {comp_id}, id, sf_guard_user_id, "type", description, ip, created_at, updated_at, current_timestamp as inserted_at
-            FROM {table}_{comp_id}_temp
-        '''
+            SELECT {comp_id} as comp_id, id, sf_guard_user_id, "type", description, ip, created_at, updated_at, current_timestamp as inserted_at
+            FROM {ext_schema}.{table}
+            WHERE
+                {date_column} > (
+                    SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+                    FROM {schema}.{table}
+                    WHERE comp_id = {comp_id} 
+                ) AND {date_column} < CURRENT_DATE + interval '8 hours'
+            '''
         cursor.execute(query)
         logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
-        # deleting temp table
-        query = f'''
-            DROP TABLE {table}_{comp_id}_temp
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is dropped')
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
@@ -1304,43 +1288,20 @@ def upsert_sf_guard_user_group(schema, table, date_column, **kwargs):
         logging.info(f'Table {schema}.{table} created successfully')
     for comp_id, ext_schema in customers:
         logging.info(f'Task is starting for company {comp_id}')
-        # creating temp table with new data increment
-        query = f'''
-            CREATE temporary TABLE {table}_{comp_id}_temp as
-            SELECT *
-            FROM {ext_schema}.{table}
-            WHERE {date_column} > (
-                SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-                FROM {schema}.{table}
-                WHERE comp_id = {comp_id}
-            ) and {date_column} < CURRENT_DATE + interval '8 hours'
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is created')
-        # deleting from target table data that were updated
-        query = f'''
-            DELETE FROM {schema}.{table}
-            USING {table}_{comp_id}_temp
-            WHERE {schema}.{table}.comp_id = {comp_id}
-                AND {schema}.{table}.user_id = {table}_{comp_id}_temp.user_id
-                AND {schema}.{table}.group_id = {table}_{comp_id}_temp.group_id
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
-        # inserting increment to target table
+        # inserting new data with increment to target
         query = f'''
             INSERT INTO {schema}.{table}
-            SELECT {comp_id}, user_id, group_id, created_at, updated_at, current_timestamp as inserted_at
-            FROM {table}_{comp_id}_temp
-        '''
+            SELECT {comp_id} as comp_id, user_id, group_id, created_at, updated_at, current_timestamp as inserted_at
+            FROM {ext_schema}.{table}
+            WHERE
+                {date_column} > (
+                    SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+                    FROM {schema}.{table}
+                    WHERE comp_id = {comp_id} 
+                ) AND {date_column} < CURRENT_DATE + interval '8 hours'
+            '''
         cursor.execute(query)
         logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
-        # deleting temp table
-        query = f'''
-            DROP TABLE {table}_{comp_id}_temp
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is dropped')
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
@@ -1379,42 +1340,20 @@ def upsert_sf_guard_group(schema, table, date_column, **kwargs):
         logging.info(f'Table {schema}.{table} created successfully')
     for comp_id, ext_schema in customers:
         logging.info(f'Task is starting for company {comp_id}')
-        # creating temp table with new data increment
-        query = f'''
-            CREATE temporary TABLE {table}_{comp_id}_temp as
-            SELECT *
-            FROM {ext_schema}.{table}
-            WHERE {date_column} > (
-                SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-                FROM {schema}.{table}
-                WHERE comp_id = {comp_id}
-            ) and {date_column} < CURRENT_DATE + interval '8 hours'
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is created')
-        # deleting from target table data that were updated
-        query = f'''
-            DELETE FROM {schema}.{table}
-            USING {table}_{comp_id}_temp
-            WHERE {schema}.{table}.comp_id = {comp_id}
-                AND {schema}.{table}.id = {table}_{comp_id}_temp.id
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
-        # inserting increment to target table
+        # inserting new data with increment to target
         query = f'''
             INSERT INTO {schema}.{table}
-            SELECT {comp_id}, id, "name", description, is_main, created_at, updated_at, current_timestamp as inserted_at
-            FROM {table}_{comp_id}_temp
-        '''
+            SELECT {comp_id} as comp_id, id, "name", description, is_main, created_at, updated_at, current_timestamp as inserted_at
+            FROM {ext_schema}.{table}
+            WHERE
+                {date_column} > (
+                    SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+                    FROM {schema}.{table}
+                    WHERE comp_id = {comp_id} 
+                ) AND {date_column} < CURRENT_DATE + interval '8 hours'
+            '''
         cursor.execute(query)
         logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
-        # deleting temp table
-        query = f'''
-            DROP TABLE {table}_{comp_id}_temp
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is dropped')
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
@@ -1423,69 +1362,71 @@ def upsert_sf_guard_group(schema, table, date_column, **kwargs):
 
 
 @task_group
-def upsert_tables(schema='staging'):
-    upsert_brands(schema, table='brands', date_column='sync_updated_at')
-    upsert_company_config(schema, table='company_config') 
-    upsert_discounts(schema, table='discounts', date_column='updated_at')
-    upsert_patient_group_ref(schema, table='patient_group_ref', date_column='sync_updated_at')
-    upsert_patient_group(schema, table='patient_group', date_column='sync_updated_at')
-    upsert_patients(schema, table='patients', date_column='updated_at')
-    upsert_product_categories(schema, table='product_categories')
-    upsert_product_checkins(schema, table='product_checkins', date_column='sync_updated_at')
-    upsert_product_filter_index(schema, table='product_filter_index')
-    upsert_product_office_qty(schema, table='product_office_qty')
-    upsert_product_transactions(schema, table='product_transactions', date_column='date')
-    upsert_product_vendors(schema, table='product_vendors', date_column='updated_at')
-    upsert_products(schema, table='products', date_column='sync_updated_at')
-    upsert_register_log(schema, table='register_log', date_column='created_at')
-    upsert_register(schema, table='register', date_column='updated_at')
-    upsert_service_history(schema, table='service_history', date_column='updated_at')
-    upsert_sf_guard_user(schema, table='sf_guard_user', date_column='updated_at')
-    upsert_tax_payment(schema, table='tax_payment', date_column='updated_at')
-    upsert_warehouse_orders(schema, table='warehouse_orders', date_column='updated_at')
-    upsert_warehouse_order_items(schema, table='warehouse_order_items', date_column='updated_at')
-    upsert_warehouse_order_logs(schema, table='warehouse_order_logs', date_column='created_at')
-    upsert_user_activity_record(schema, table='user_activity_record', date_column='updated_at')
-    upsert_sf_guard_user_group(schema, table='sf_guard_user_group', date_column='updated_at')
-    upsert_sf_guard_group(schema, table='sf_guard_group', date_column='updated_at')
+def upsert_tables(schema='mock'):
+    # upsert_brands(schema, table='brands', date_column='sync_updated_at')
+    # upsert_company_config(schema, table='company_config') 
+    # upsert_discounts(schema, table='discounts', date_column='updated_at')
+    # upsert_patient_group_ref(schema, table='patient_group_ref', date_column='sync_updated_at')
+    # upsert_patient_group(schema, table='patient_group', date_column='sync_updated_at')
+    # upsert_patients(schema, table='patients', date_column='updated_at')
+    # upsert_product_categories(schema, table='product_categories')
+    # upsert_product_checkins(schema, table='product_checkins', date_column='sync_updated_at')
+    # upsert_product_filter_index(schema, table='product_filter_index')
+    # upsert_product_office_qty(schema, table='product_office_qty')
+    # upsert_product_transactions(schema, table='product_transactions', date_column='date')
+    # upsert_product_vendors(schema, table='product_vendors', date_column='updated_at')
+    # upsert_products(schema, table='products', date_column='sync_updated_at')
+    # upsert_register_log(schema, table='register_log', date_column='created_at')
+    # upsert_register(schema, table='register', date_column='updated_at')
+    # upsert_service_history(schema, table='service_history', date_column='updated_at')
+    # upsert_sf_guard_user(schema, table='sf_guard_user', date_column='updated_at')
+    # upsert_tax_payment(schema, table='tax_payment', date_column='updated_at')
+    # upsert_warehouse_orders(schema, table='warehouse_orders', date_column='updated_at')
+    # upsert_warehouse_order_items(schema, table='warehouse_order_items', date_column='updated_at')
+    # upsert_warehouse_order_logs(schema, table='warehouse_order_logs', date_column='created_at')
+    # upsert_user_activity_record(schema, table='user_activity_record', date_column='updated_at')
+    # upsert_sf_guard_user_group(schema, table='sf_guard_user_group', date_column='updated_at')
+    # upsert_sf_guard_group(schema, table='sf_guard_group', date_column='updated_at')
+    stg_load(job_name='warehouse_order_logs')
 
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'on_failure_callback': failure_slack_alert,
-    'on_retry_callback': retry_slack_alert,
+    # 'on_failure_callback': failure_slack_alert,
+    # 'on_retry_callback': retry_slack_alert,
     'retries': 10,
     'retry_delay': timedelta(seconds=60)
 }
 
 
 with DAG(
-    dag_id='update_everything_new',
+    dag_id='update_everything_new_dev',
     max_active_tasks=32,
     schedule='0 8 * * *', # UTC time
     start_date=datetime(year=2022, month=12, day=8),
     default_args=default_args,
     catchup=False,
 ) as dag:
-    start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
+    # start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
     get_customers_task = get_customers()
     upsert_tables_group = upsert_tables()
-    dbt_run = DbtRunOperator(
-        task_id="dbt_run",
-        project_dir="/home/ubuntu/dbt/indica",
-        profiles_dir="/home/ubuntu/.dbt",
-    )
-    dbt_snapshot = DbtSnapshotOperator(
-        task_id="dbt_snapshot",
-        project_dir="/home/ubuntu/dbt/indica",
-        profiles_dir="/home/ubuntu/.dbt",
-    )
-    dbt_test = DbtTestOperator(
-        task_id="dbt_test",
-        project_dir="/home/ubuntu/dbt/indica",
-        profiles_dir="/home/ubuntu/.dbt",
-    )
-    success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
+    # dbt_run = DbtRunOperator(
+    #     task_id="dbt_run",
+    #     project_dir="/home/ubuntu/dbt/indica",
+    #     profiles_dir="/home/ubuntu/.dbt",
+    # )
+    # dbt_snapshot = DbtSnapshotOperator(
+    #     task_id="dbt_snapshot",
+    #     project_dir="/home/ubuntu/dbt/indica",
+    #     profiles_dir="/home/ubuntu/.dbt",
+    # )
+    # dbt_test = DbtTestOperator(
+    #     task_id="dbt_test",
+    #     project_dir="/home/ubuntu/dbt/indica",
+    #     profiles_dir="/home/ubuntu/.dbt",
+    # )
+    # success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
-    start_alert >> get_customers_task >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
+
+get_customers_task >> upsert_tables_group

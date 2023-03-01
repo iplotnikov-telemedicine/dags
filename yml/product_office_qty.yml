@@ -1,0 +1,40 @@
+database: dev
+schema: public
+table: product_office_qty
+load_type: increment
+increment_column: created_at
+pk: id
+source:
+  schema: public
+  table: warehouse_order_logs
+target:
+  schema: mock
+  table: warehouse_order_logs
+map:
+  -
+    source: id
+    target: id
+  -
+    source: order_id
+    target: order_id
+  -
+    source: "type"
+    target: "type"
+  -
+    source: sf_guard_user_id
+    target: sf_guard_user_id
+  -
+    source: sf_guard_user_name
+    target: sf_guard_user_name
+  -
+    source: order_courier_register_id
+    target: order_courier_register_id
+  -
+    source: created_at
+    target: created_at
+  -
+    source: register_id
+    target: register_id
+  -
+    source: application
+    target: application
