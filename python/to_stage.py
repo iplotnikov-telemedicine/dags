@@ -16,16 +16,18 @@ redshift_conn = redshift_hook.get_conn()
 cursor = redshift_conn.cursor()
 
 
-@task
-def stg_load(job_name, **kwargs):
-    job_cfg = get_job_config(job_name)
+# @task()
+# def stg_load(job_name, **kwargs):
+def stg_load(*op_args, **kwargs):
+    job_cfg = get_job_config(op_args[0])
     load_type = job_cfg.load_type
     target_schema = job_cfg.target.schema
     target_table = job_cfg.target.table
     source_table = job_cfg.source.table
     increment = job_cfg.increment_column
+    pk = job_cfg.pk
     source_fields = get_fields_for('source', job_cfg.map)
-    target_fields = get_fields_for('target', job_cfg.map)
+    # target_fields = get_fields_for('target', job_cfg.map)
     
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -57,6 +59,7 @@ def stg_load(job_name, **kwargs):
     for comp_id, ext_schema in customers:
         logging.info(f'Task is starting for company {comp_id}')
         if load_type == 'increment':
+            logging.info(f'Start loading with type: {load_type}')
             # inserting new data with increment to target
             query = f'''
                 INSERT INTO {target_schema}.{target_table}
@@ -69,7 +72,10 @@ def stg_load(job_name, **kwargs):
                         WHERE comp_id = {comp_id} 
                     ) AND {increment} < CURRENT_DATE + interval '8 hours'
                 '''
+            cursor.execute(query)
+            logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {pendulum.now()}')
         elif load_type == 'full':
+            logging.info(f'Start loading with type: {load_type}')
             # inserting new data with full load to target
             # deleting old data from target
             query = f'''
@@ -84,8 +90,48 @@ def stg_load(job_name, **kwargs):
                 SELECT {comp_id}, {source_fields}, current_timestamp as inserted_at
                 FROM {ext_schema}.{source_table}
             '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {pendulum.now()}')
+            cursor.execute(query)
+            logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {pendulum.now()}')
+        elif load_type == 'increment_with_delete':
+            logging.info(f'Start loading with type: {load_type}')
+            # creating temp table with new data increment
+            query = f'''
+                CREATE temporary TABLE {target_table}_{comp_id}_temp as
+                SELECT *
+                FROM {ext_schema}.{source_table}
+                WHERE {increment} > (
+                    SELECT coalesce(max({increment}), '1970-01-01 00:00:00'::timestamp)
+                    FROM {target_schema}.{target_table}
+                    WHERE comp_id = {comp_id}
+                ) and {increment} < CURRENT_DATE + interval '8 hours'
+            '''
+            cursor.execute(query)
+            logging.info(f'Temp table is created')
+            # deleting from target table data that were updated
+            query = f'''
+                DELETE FROM {target_schema}.{target_table}
+                USING {target_table}_{comp_id}_temp
+                WHERE {target_schema}.{target_table}.comp_id = {comp_id}
+                    AND {target_schema}.{target_table}.{pk} = {target_table}_{comp_id}_temp.{pk}
+            '''
+            cursor.execute(query)
+            logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {pendulum.now()}')
+            # inserting increment to target table
+            query = f'''
+                INSERT INTO {target_schema}.{target_table}
+                SELECT {comp_id}, {source_fields}, current_timestamp as inserted_at
+                FROM {target_table}_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {pendulum.now()}')
+            # deleting temp table
+            query = f'''
+                DROP TABLE {target_table}_{comp_id}_temp
+            '''
+            cursor.execute(query)
+            logging.info(f'Temp table is dropped')
+        else:
+            raise ValueError(f'Incorrect load_type: {load_type}. Expected values: "increment", "full", "increment_with_delete". Please check {op_args[0]}.yml file in section "load_type"')
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')

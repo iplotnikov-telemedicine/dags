@@ -1,7 +1,7 @@
 database: dev
 schema: public
 table: warehouse_order_logs
-load_type: increment
+load_type: increment 
 increment_column: created_at
 pk: id
 source:

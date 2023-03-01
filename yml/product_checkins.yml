@@ -1,0 +1,136 @@
+database: dev
+schema: public
+table: product_checkins
+load_type: increment_with_delete
+increment_column: sync_updated_at
+pk: id
+source:
+  schema: public
+  table: product_checkins
+target:
+  schema: mock
+  table: product_checkins
+map:
+  -
+    source: id
+    target: id
+  -
+    source: product_id
+    target: product_id
+  -
+    source: vendor_id
+    target: vendor_id
+  -
+    source: user_id
+    target: user_id
+  -
+    source: qty
+    target: qty
+  -
+    source: price
+    target: price
+  -
+    source: "date"
+    target: "date"
+  -
+    source: status
+    target: status
+  -
+    source: balance
+    target: balance
+  -
+    source: note
+    target: note
+  -
+    source: batch_id
+    target: batch_id
+  -
+    source: lab_result_id
+    target: lab_result_id
+  -
+    source: has_lab_result
+    target: has_lab_result
+  -
+    source: uid
+    target: uid
+  -
+    source: harvest_date
+    target: harvest_date
+  -
+    source: sync_created_at
+    target: sync_created_at
+  -
+    source: sync_updated_at
+    target: sync_updated_at
+  -
+    source: opc
+    target: opc
+  -
+    source: sale_qty
+    target: sale_qty
+  -
+    source: office_id
+    target: office_id
+  -
+    source: is_metrc
+    target: is_metrc
+  -
+    source: available_qty
+    target: available_qty
+  -
+    source: is_finished
+    target: is_finished
+  -
+    source: producer_id
+    target: producer_id
+  -
+    source: vendor_type
+    target: vendor_type
+  -
+    source: vendor_name
+    target: vendor_name
+  -
+    source: facility_id
+    target: facility_id
+  -
+    source: is_special
+    target: is_special
+  -
+    source: packaged_date
+    target: packaged_date
+  -
+    source: best_by_date
+    target: best_by_date
+  -
+    source: deleted_at
+    target: deleted_at
+  -
+    source: production_run
+    target: production_run
+  -
+    source: is_under_package_control
+    target: is_under_package_control
+  -
+    source: is_form_modified
+    target: is_form_modified
+  -
+    source: metrc_initial_quantity
+    target: metrc_initial_quantity
+  -
+    source: external_barcode
+    target: external_barcode
+  -
+    source: packaged_by_id
+    target: packaged_by_id
+  -
+    source: manifest
+    target: manifest
+  -
+    source: is_sample_package
+    target: is_sample_package
+  -
+    source: paused_to_datetime
+    target: paused_to_datetime
+  -
+    source: excise_tax_paid
+    target: excise_tax_paid

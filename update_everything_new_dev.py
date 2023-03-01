@@ -1,5 +1,3 @@
-# import sys
-# sys.path.insert(1, '/Users/a.bezgodov/airflow/dags/python')
 import sys
 import os
 sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
@@ -16,6 +14,7 @@ from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
 from airflow.models import Variable
 from python.to_stage import stg_load
+from airflow.utils.task_group import TaskGroup
 
 
 # Get connection to Redshift DB
@@ -1361,33 +1360,35 @@ def upsert_sf_guard_group(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task_group
-def upsert_tables(schema='mock'):
-    # upsert_brands(schema, table='brands', date_column='sync_updated_at')
-    # upsert_company_config(schema, table='company_config') 
-    # upsert_discounts(schema, table='discounts', date_column='updated_at')
-    # upsert_patient_group_ref(schema, table='patient_group_ref', date_column='sync_updated_at')
-    # upsert_patient_group(schema, table='patient_group', date_column='sync_updated_at')
-    # upsert_patients(schema, table='patients', date_column='updated_at')
-    # upsert_product_categories(schema, table='product_categories')
-    # upsert_product_checkins(schema, table='product_checkins', date_column='sync_updated_at')
-    # upsert_product_filter_index(schema, table='product_filter_index')
-    # upsert_product_office_qty(schema, table='product_office_qty')
-    # upsert_product_transactions(schema, table='product_transactions', date_column='date')
-    # upsert_product_vendors(schema, table='product_vendors', date_column='updated_at')
-    # upsert_products(schema, table='products', date_column='sync_updated_at')
-    # upsert_register_log(schema, table='register_log', date_column='created_at')
-    # upsert_register(schema, table='register', date_column='updated_at')
-    # upsert_service_history(schema, table='service_history', date_column='updated_at')
-    # upsert_sf_guard_user(schema, table='sf_guard_user', date_column='updated_at')
-    # upsert_tax_payment(schema, table='tax_payment', date_column='updated_at')
-    # upsert_warehouse_orders(schema, table='warehouse_orders', date_column='updated_at')
-    # upsert_warehouse_order_items(schema, table='warehouse_order_items', date_column='updated_at')
-    # upsert_warehouse_order_logs(schema, table='warehouse_order_logs', date_column='created_at')
-    # upsert_user_activity_record(schema, table='user_activity_record', date_column='updated_at')
-    # upsert_sf_guard_user_group(schema, table='sf_guard_user_group', date_column='updated_at')
-    # upsert_sf_guard_group(schema, table='sf_guard_group', date_column='updated_at')
-    stg_load(job_name='warehouse_order_logs')
+# @task_group
+# def upsert_tables():
+#     # upsert_brands(schema, table='brands', date_column='sync_updated_at')
+#     # upsert_company_config(schema, table='company_config') 
+#     # upsert_discounts(schema, table='discounts', date_column='updated_at')
+#     # upsert_patient_group_ref(schema, table='patient_group_ref', date_column='sync_updated_at')
+#     # upsert_patient_group(schema, table='patient_group', date_column='sync_updated_at')
+#     # upsert_patients(schema, table='patients', date_column='updated_at')
+#     # upsert_product_categories(schema, table='product_categories')
+#     # upsert_product_checkins(schema, table='product_checkins', date_column='sync_updated_at')
+#     # upsert_product_filter_index(schema, table='product_filter_index')
+#     # upsert_product_office_qty(schema, table='product_office_qty')
+#     # upsert_product_transactions(schema, table='product_transactions', date_column='date')
+#     # upsert_product_vendors(schema, table='product_vendors', date_column='updated_at')
+#     # upsert_products(schema, table='products', date_column='sync_updated_at')
+#     # upsert_register_log(schema, table='register_log', date_column='created_at')
+#     # upsert_register(schema, table='register', date_column='updated_at')
+#     # upsert_service_history(schema, table='service_history', date_column='updated_at')
+#     # upsert_sf_guard_user(schema, table='sf_guard_user', date_column='updated_at')
+#     # upsert_tax_payment(schema, table='tax_payment', date_column='updated_at')
+#     # upsert_warehouse_orders(schema, table='warehouse_orders', date_column='updated_at')
+#     # upsert_warehouse_order_items(schema, table='warehouse_order_items', date_column='updated_at')
+#     # upsert_warehouse_order_logs(schema, table='warehouse_order_logs', date_column='created_at')
+#     # upsert_user_activity_record(schema, table='user_activity_record', date_column='updated_at')
+#     # upsert_sf_guard_user_group(schema, table='sf_guard_user_group', date_column='updated_at')
+#     # upsert_sf_guard_group(schema, table='sf_guard_group', date_column='updated_at')
+#     stg_load(job_name='warehouse_order_logs')
+#     stg_load(job_name='product_office_qty')
+#     stg_load(job_name='product_checkins')
 
 
 default_args = {
@@ -1403,14 +1404,14 @@ default_args = {
 with DAG(
     dag_id='update_everything_new_dev',
     max_active_tasks=32,
-    schedule='0 8 * * *', # UTC time
+    schedule=None, # UTC time
     start_date=datetime(year=2022, month=12, day=8),
     default_args=default_args,
     catchup=False,
 ) as dag:
     # start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
     get_customers_task = get_customers()
-    upsert_tables_group = upsert_tables()
+    # upsert_tables_group = upsert_tables()
     # dbt_run = DbtRunOperator(
     #     task_id="dbt_run",
     #     project_dir="/home/ubuntu/dbt/indica",
@@ -1428,5 +1429,25 @@ with DAG(
     # )
     # success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
+    with TaskGroup(group_id='upsert_tables_group') as upsert_tables_group:
+        warehouse_order_logs = PythonOperator(
+            task_id="warehouse_order_logs",
+            python_callable=stg_load,
+            op_args=['warehouse_order_logs'],
+            provide_context=True
+        )
+        product_office_qty = PythonOperator(
+            task_id="product_office_qty",
+            python_callable=stg_load,
+            op_args=['product_office_qty'],
+            provide_context=True
+        )
+        product_checkins = PythonOperator(
+            task_id="product_checkins",
+            python_callable=stg_load,
+            op_args=['product_checkins'],
+            provide_context=True
+        )
 
+# get_customers_task >> upsert_tables_group
 get_customers_task >> upsert_tables_group
