@@ -1,0 +1,145 @@
+database: dev
+schema: public
+table: service_history
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+source:
+  schema: public
+  table: service_history
+target:
+  schema: mock
+  table: service_history
+map:
+  -
+    source: id
+    target: id
+  -
+    source: service_id
+    target: service_id
+  -
+    source: office_id
+    target: office_id
+  -
+    source: user_id
+    target: user_id
+  -
+    source: patient_id
+    target: patient_id
+  -
+    source: doctor_id
+    target: doctor_id
+  -
+    source: object_id
+    target: object_id
+  -
+    source: object_type
+    target: object_type
+  -
+    source: referal_id
+    target: referal_id
+  -
+    source: notes
+    target: notes
+  -
+    source: amount
+    target: amount
+  -
+    source: edit_amount
+    target: edit_amount
+  -
+    source: edit_reason
+    target: edit_reason
+  -
+    source: created_at
+    target: created_at
+  -
+    source: updated_at
+    target: updated_at
+  -
+    source: ad_campaign_id
+    target: ad_campaign_id
+  -
+    source: ad_campaign_patient_type_id
+    target: ad_campaign_patient_type_id
+  -
+    source: intake
+    target: intake
+  -
+    source: exam
+    target: exam
+  -
+    source: has_intake_for_approving
+    target: has_intake_for_approving
+  -
+    source: has_exam_for_approving
+    target: has_exam_for_approving
+  -
+    source: order_id
+    target: order_id
+  -
+    source: amount_by_referral_points
+    target: amount_by_referral_points
+  -
+    source: count_referral_points
+    target: count_referral_points
+  -
+    source: register_id
+    target: register_id
+  -
+    source: balance
+    target: balance
+  -
+    source: method1_amount
+    target: method1_amount
+  -
+    source: method2_amount
+    target: method2_amount
+  -
+    source: method3_amount
+    target: method3_amount
+  -
+    source: method4_amount
+    target: method4_amount
+  -
+    source: method5_amount
+    target: method5_amount
+  -
+    source: method6_amount
+    target: method6_amount
+  -
+    source: method7_amount
+    target: method7_amount
+  -
+    source: profit
+    target: profit
+  -
+    source: is_take_payment
+    target: is_take_payment
+  -
+    source: tax
+    target: tax
+  -
+    source: dc_cash_change
+    target: dc_cash_change
+  -
+    source: is_dejavoo_payment
+    target: is_dejavoo_payment
+  -
+    source: "type"
+    target: "type"
+  -
+    source: cost
+    target: cost
+  -
+    source: discount
+    target: discount
+  -
+    source: "free"
+    target: "free"
+  -
+    source: payment_method
+    target: payment_method
+  -
+    source: payment_amount
+    target: payment_amount

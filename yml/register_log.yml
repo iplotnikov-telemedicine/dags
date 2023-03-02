@@ -1,0 +1,109 @@
+database: dev
+schema: public
+table: register_log
+load_type: increment
+increment_column: created_at
+pk: ['id']
+source:
+  schema: public
+  table: register_log
+target:
+  schema: mock
+  table: register_log
+map:
+  -
+    source: id
+    target: id
+  -
+    source: register_id
+    target: register_id
+  -
+    source: opening_amount
+    target: opening_amount
+  -
+    source: cash_sales
+    target: cash_sales
+  -
+    source: drops
+    target: drops
+  -
+    source: expected_drawer
+    target: expected_drawer
+  -
+    source: actual_drawer
+    target: actual_drawer
+  -
+    source: over_drawer
+    target: over_drawer
+  -
+    source: created_at
+    target: created_at
+  -
+    source: updated_at
+    target: updated_at
+  -
+    source: "type"
+    target: "type"
+  -
+    source: service_history_id
+    target: service_history_id
+  -
+    source: sf_guard_user_id
+    target: sf_guard_user_id
+  -
+    source: amount
+    target: amount
+  -
+    source: register_type
+    target: register_type
+  -
+    source: total_cost
+    target: total_cost
+  -
+    source: total_profit
+    target: total_profit
+  -
+    source: discount
+    target: discount
+  -
+    source: tax
+    target: tax
+  -
+    source: total_amount
+    target: total_amount
+  -
+    source: method1_amount
+    target: method1_amount
+  -
+    source: method2_amount
+    target: method2_amount
+  -
+    source: method3_amount
+    target: method3_amount
+  -
+    source: method4_amount
+    target: method4_amount
+  -
+    source: method5_amount
+    target: method5_amount
+  -
+    source: method6_amount
+    target: method6_amount
+  -
+    source: method7_amount
+    target: method7_amount
+  -
+    source: cash_returns
+    target: cash_returns
+  -
+    source: delivered_amount
+    target: delivered_amount
+  -
+    source: pending_amount
+    target: pending_amount
+  -
+    source: dc_cash_change
+    target: dc_cash_change
+  -
+    source: vehicle_id
+    target: vehicle_id

@@ -108,11 +108,14 @@ def stg_load(*op_args, **kwargs):
             cursor.execute(query)
             logging.info(f'Temp table is created')
             # deleting from target table data that were updated
+            keys_condition = ' '
+            for key in pk:
+                keys_condition = keys_condition + ' ' + f'AND {target_schema}.{target_table}.{key} = {target_table}_{comp_id}_temp.{key}' + '\n'
             query = f'''
                 DELETE FROM {target_schema}.{target_table}
                 USING {target_table}_{comp_id}_temp
                 WHERE {target_schema}.{target_table}.comp_id = {comp_id}
-                    AND {target_schema}.{target_table}.{pk} = {target_table}_{comp_id}_temp.{pk}
+                    {keys_condition}
             '''
             cursor.execute(query)
             logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {pendulum.now()}')

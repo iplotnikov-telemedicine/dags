@@ -1,0 +1,37 @@
+database: dev
+schema: public
+table: brands
+load_type: increment_with_delete
+increment_column: sync_updated_at
+pk: ['id']
+source:
+  schema: public
+  table: brands
+target:
+  schema: mock
+  table: brands
+map:
+  -
+    source: id
+    target: id
+  -
+    source: brand_id
+    target: brand_id
+  -
+    source: brand_name
+    target: brand_name
+  -
+    source: wm_id
+    target: wm_id
+  -
+    source: sync_created_at
+    target: sync_created_at
+  -
+    source: sync_updated_at
+    target: sync_updated_at
+  -
+    source: description
+    target: description
+  -
+    source: is_internal
+    target: is_internal

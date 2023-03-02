@@ -3,7 +3,7 @@ schema: public
 table: product_checkins
 load_type: increment_with_delete
 increment_column: sync_updated_at
-pk: id
+pk: ['id']
 source:
   schema: public
   table: product_checkins

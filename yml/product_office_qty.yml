@@ -3,7 +3,7 @@ schema: public
 table: product_office_qty
 load_type: full
 increment_column: 
-pk: poq_id
+pk: ['poq_id']
 source:
   schema: public
   table: product_office_qty

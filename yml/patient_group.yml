@@ -1,0 +1,34 @@
+database: dev
+schema: public
+table: patient_group
+load_type: increment_with_delete
+increment_column: sync_updated_at
+pk: ['id']
+source:
+  schema: public
+  table: patient_group
+target:
+  schema: mock
+  table: patient_group
+map:
+  -
+    source: id
+    target: id
+  -
+    source: "name"
+    target: "name"
+  -
+    source: sync_created_at
+    target: sync_created_at
+  -
+    source: sync_updated_at
+    target: sync_updated_at
+  -
+    source: is_auto
+    target: is_auto
+  -
+    source: start_date
+    target: start_date
+  -
+    source: end_date
+    target: end_date

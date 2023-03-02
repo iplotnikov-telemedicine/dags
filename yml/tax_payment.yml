@@ -1,0 +1,97 @@
+database: dev
+schema: public
+table: tax_payment
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+source:
+  schema: public
+  table: tax_payment
+target:
+  schema: mock
+  table: tax_payment
+map:
+  -
+    source: id
+    target: id
+  -
+    source: order_id
+    target: order_id
+  -
+    source: order_item_id
+    target: order_item_id
+  -
+    source: product_id
+    target: product_id
+  -
+    source: state
+    target: state
+  -
+    source: county
+    target: county
+  -
+    source: city
+    target: city
+  -
+    source: state_tax
+    target: state_tax
+  -
+    source: state_mj_tax
+    target: state_mj_tax
+  -
+    source: county_tax
+    target: county_tax
+  -
+    source: county_mj_tax
+    target: county_mj_tax
+  -
+    source: city_tax
+    target: city_tax
+  -
+    source: city_mj_tax
+    target: city_mj_tax
+  -
+    source: created_at
+    target: created_at
+  -
+    source: updated_at
+    target: updated_at
+  -
+    source: is_deleted
+    target: is_deleted
+  -
+    source: state_sales_tax
+    target: state_sales_tax
+  -
+    source: county_sales_tax
+    target: county_sales_tax
+  -
+    source: city_sales_tax
+    target: city_sales_tax
+  -
+    source: state_local_tax
+    target: state_local_tax
+  -
+    source: county_local_tax
+    target: county_local_tax
+  -
+    source: city_local_tax
+    target: city_local_tax
+  -
+    source: excise_tax
+    target: excise_tax
+  -
+    source: state_delivery_sales_tax
+    target: state_delivery_sales_tax
+  -
+    source: county_delivery_sales_tax
+    target: county_delivery_sales_tax
+  -
+    source: city_delivery_sales_tax
+    target: city_delivery_sales_tax
+  -
+    source: city_delivery_local_tax
+    target: city_delivery_local_tax
+  -
+    source: excise_delivery_tax
+    target: excise_delivery_tax

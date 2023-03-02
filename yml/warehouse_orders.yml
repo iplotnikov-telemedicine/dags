@@ -1,0 +1,292 @@
+database: dev
+schema: public
+table: warehouse_orders
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+source:
+  schema: public
+  table: warehouse_orders
+target:
+  schema: mock
+  table: warehouse_orders
+map:
+  -
+    source: id
+    target: id
+  -
+    source: "number"
+    target: "number"
+  -
+    source: patient_id
+    target: patient_id
+  -
+    source: "type"
+    target: "type"
+  -
+    source: status
+    target: status
+  -
+    source: order_status
+    target: order_status
+  -
+    source: payment_status
+    target: payment_status
+  -
+    source: fulfillment_status
+    target: fulfillment_status
+  -
+    source: shipment_status
+    target: shipment_status
+  -
+    source: created_at
+    target: created_at
+  -
+    source: updated_at
+    target: updated_at
+  -
+    source: charge_by
+    target: charge_by
+  -
+    source: amount
+    target: amount
+  -
+    source: referral_discount_value
+    target: referral_discount_value
+  -
+    source: discount_type_bak
+    target: discount_type_bak
+  -
+    source: total_amount
+    target: total_amount
+  -
+    source: discount_has_changed
+    target: discount_has_changed
+  -
+    source: office_id
+    target: office_id
+  -
+    source: sum_tax
+    target: sum_tax
+  -
+    source: sum_discount
+    target: sum_discount
+  -
+    source: sum_free_discount
+    target: sum_free_discount
+  -
+    source: sum_income
+    target: sum_income
+  -
+    source: custom_discount_value
+    target: custom_discount_value
+  -
+    source: custom_discount_type_bak
+    target: custom_discount_type_bak
+  -
+    source: delivery_address
+    target: delivery_address
+  -
+    source: delivery_city
+    target: delivery_city
+  -
+    source: delivery_state
+    target: delivery_state
+  -
+    source: delivery_zip
+    target: delivery_zip
+  -
+    source: delivery_phone
+    target: delivery_phone
+  -
+    source: delivery_latitude
+    target: delivery_latitude
+  -
+    source: delivery_longitude
+    target: delivery_longitude
+  -
+    source: shipping_method_id
+    target: shipping_method_id
+  -
+    source: shipping_amount
+    target: shipping_amount
+  -
+    source: courier_register_id
+    target: courier_register_id
+  -
+    source: "comment"
+    target: "comment"
+  -
+    source: sync_updated_at
+    target: sync_updated_at
+  -
+    source: sync_created_at
+    target: sync_created_at
+  -
+    source: register_id
+    target: register_id
+  -
+    source: discount_id
+    target: discount_id
+  -
+    source: referral_discount_type
+    target: referral_discount_type
+  -
+    source: custom_discount_type
+    target: custom_discount_type
+  -
+    source: balance
+    target: balance
+  -
+    source: method1_amount
+    target: method1_amount
+  -
+    source: method2_amount
+    target: method2_amount
+  -
+    source: method3_amount
+    target: method3_amount
+  -
+    source: method4_amount
+    target: method4_amount
+  -
+    source: method5_amount
+    target: method5_amount
+  -
+    source: method6_amount
+    target: method6_amount
+  -
+    source: method7_amount
+    target: method7_amount
+  -
+    source: processing_register_id
+    target: processing_register_id
+  -
+    source: photo
+    target: photo
+  -
+    source: delivery_datetime
+    target: delivery_datetime
+  -
+    source: delivery_address_id
+    target: delivery_address_id
+  -
+    source: change_amount
+    target: change_amount
+  -
+    source: tip_amount
+    target: tip_amount
+  -
+    source: placed_at
+    target: placed_at
+  -
+    source: completed_at
+    target: completed_at
+  -
+    source: confirmed_at
+    target: confirmed_at
+  -
+    source: preferred_payment_method
+    target: preferred_payment_method
+  -
+    source: is_bonus_point_as_discount
+    target: is_bonus_point_as_discount
+  -
+    source: marketplace
+    target: marketplace
+  -
+    source: applied_potify_credits
+    target: applied_potify_credits
+  -
+    source: asap_delivery
+    target: asap_delivery
+  -
+    source: cashier_id
+    target: cashier_id
+  -
+    source: is_transit_started
+    target: is_transit_started
+  -
+    source: metrc_status
+    target: metrc_status
+  -
+    source: cashier_name
+    target: cashier_name
+  -
+    source: patient_type
+    target: patient_type
+  -
+    source: register_name
+    target: register_name
+  -
+    source: courier_id
+    target: courier_id
+  -
+    source: courier_name
+    target: courier_name
+  -
+    source: courier_register_name
+    target: courier_register_name
+  -
+    source: is_verified_by_courier
+    target: is_verified_by_courier
+  -
+    source: is_shipped
+    target: is_shipped
+  -
+    source: shipping_tracking_number
+    target: shipping_tracking_number
+  -
+    source: patient_has_caregiver
+    target: patient_has_caregiver
+  -
+    source: patient_is_tax_exempt
+    target: patient_is_tax_exempt
+  -
+    source: metrc_substatus
+    target: metrc_substatus
+  -
+    source: checkout_staff_id
+    target: checkout_staff_id
+  -
+    source: pos_mode
+    target: pos_mode
+  -
+    source: signature
+    target: signature
+  -
+    source: delivery_method
+    target: delivery_method
+  -
+    source: courier_number
+    target: courier_number
+  -
+    source: patient_rec_number
+    target: patient_rec_number
+  -
+    source: office_zip_name
+    target: office_zip_name
+  -
+    source: refund_type
+    target: refund_type
+  -
+    source: returned_at
+    target: returned_at
+  -
+    source: shipping_method_name
+    target: shipping_method_name
+  -
+    source: tax_tier_version_id
+    target: tax_tier_version_id
+  -
+    source: vehicle
+    target: vehicle
+  -
+    source: metrc_delivery_status
+    target: metrc_delivery_status
+  -
+    source: resend_staff_id
+    target: resend_staff_id
+  -
+    source: delivery_estimated_time_of_arrival
+    target: delivery_estimated_time_of_arrival

@@ -1,0 +1,31 @@
+database: dev
+schema: public
+table: sf_guard_group
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+source:
+  schema: public
+  table: sf_guard_group
+target:
+  schema: mock
+  table: sf_guard_group
+map:
+  -
+    source: id
+    target: id
+  -
+    source: "name"
+    target: "name"
+  -
+    source: description
+    target: description
+  -
+    source: is_main
+    target: is_main
+  -
+    source: created_at
+    target: created_at
+  -
+    source: updated_at
+    target: updated_at

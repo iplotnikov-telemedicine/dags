@@ -1,0 +1,172 @@
+database: dev
+schema: public
+table: register
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+source:
+  schema: public
+  table: register
+target:
+  schema: mock
+  table: register
+map:
+  -
+    source: id
+    target: id
+  -
+    source: manager_sf_guard_user_id
+    target: manager_sf_guard_user_id
+  -
+    source: name
+    target: name
+  -
+    source: status
+    target: status
+  -
+    source: change_status_at
+    target: change_status_at
+  -
+    source: "type"
+    target: "type"
+  -
+    source: is_active
+    target: is_active
+  -
+    source: opening_amount
+    target: opening_amount
+  -
+    source: cash_tenders
+    target: cash_tenders
+  -
+    source: drops
+    target: drops
+  -
+    source: expected_drawer
+    target: expected_drawer
+  -
+    source: cash_in_drawer
+    target: cash_in_drawer
+  -
+    source: created_at
+    target: created_at
+  -
+    source: updated_at
+    target: updated_at
+  -
+    source: pending_amount
+    target: pending_amount
+  -
+    source: pending_count
+    target: pending_count
+  -
+    source: delivered_amount
+    target: delivered_amount
+  -
+    source: delivered_count
+    target: delivered_count
+  -
+    source: activator_sf_guard_user_id
+    target: activator_sf_guard_user_id
+  -
+    source: is_deleted
+    target: is_deleted
+  -
+    source: latitude
+    target: latitude
+  -
+    source: longitude
+    target: longitude
+  -
+    source: total_weight
+    target: total_weight
+  -
+    source: "returns"
+    target: "returns"
+  -
+    source: method1_amount::real
+    target: method1_amount::real
+  -
+    source: method2_amount::real
+    target: method2_amount::real
+  -
+    source: method3_amount::real
+    target: method3_amount::real
+  -
+    source: method4_amount::real
+    target: method4_amount::real
+  -
+    source: method5_amount::real
+    target: method5_amount::real
+  -
+    source: method6_amount::real
+    target: method6_amount::real
+  -
+    source: method7_amount::real
+    target: method7_amount::real
+  -
+    source: all_methods_total::real
+    target: all_methods_total::real
+  -
+    source: port
+    target: port
+  -
+    source: ip_address
+    target: ip_address
+  -
+    source: sync_updated_at
+    target: sync_updated_at
+  -
+    source: sync_created_at
+    target: sync_created_at
+  -
+    source: office_id
+    target: office_id
+  -
+    source: push_new_patient
+    target: push_new_patient
+  -
+    source: push_patient_approved
+    target: push_patient_approved
+  -
+    source: push_patient_declined
+    target: push_patient_declined
+  -
+    source: push_new_order
+    target: push_new_order
+  -
+    source: push_order_delivered
+    target: push_order_delivered
+  -
+    source: platform
+    target: platform
+  -
+    source: tip_amount
+    target: tip_amount
+  -
+    source: poshub_id
+    target: poshub_id
+  -
+    source: eta
+    target: eta
+  -
+    source: eta_updated_at
+    target: eta_updated_at
+  -
+    source: application_name
+    target: application_name
+  -
+    source: application_version
+    target: application_version
+  -
+    source: signin_sf_guard_user_id
+    target: signin_sf_guard_user_id
+  -
+    source: dc_cash_change
+    target: dc_cash_change
+  -
+    source: dispatch_orders_based_on_delivery_zones
+    target: dispatch_orders_based_on_delivery_zones
+  -
+    source: vehicle_id
+    target: vehicle_id
