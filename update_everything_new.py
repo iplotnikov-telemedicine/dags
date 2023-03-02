@@ -1230,20 +1230,42 @@ def upsert_user_activity_record(schema, table, date_column, **kwargs):
         logging.info(f'Table {schema}.{table} created successfully')
     for comp_id, ext_schema in customers:
         logging.info(f'Task is starting for company {comp_id}')
-        # inserting new data with increment to target
+        # creating temp table with new data increment
+        query = f'''
+            CREATE temporary TABLE {table}_{comp_id}_temp as
+            SELECT *
+            FROM {ext_schema}.{table}
+            WHERE {date_column} > (
+                SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+                FROM {schema}.{table}
+                WHERE comp_id = {comp_id}
+            ) and {date_column} < CURRENT_DATE + interval '8 hours'
+        '''
+        cursor.execute(query)
+        logging.info(f'Temp table is created')
+        # deleting from target table data that were updated
+        query = f'''
+            DELETE FROM {schema}.{table}
+            USING {table}_{comp_id}_temp
+            WHERE {schema}.{table}.comp_id = {comp_id}
+                AND {schema}.{table}.id = {table}_{comp_id}_temp.id
+        '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+        # inserting increment to target table
         query = f'''
             INSERT INTO {schema}.{table}
-            SELECT {comp_id} as comp_id, id, sf_guard_user_id, "type", description, ip, created_at, updated_at, current_timestamp as inserted_at
-            FROM {ext_schema}.{table}
-            WHERE
-                {date_column} > (
-                    SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-                    FROM {schema}.{table}
-                    WHERE comp_id = {comp_id} 
-                ) AND {date_column} < CURRENT_DATE + interval '8 hours'
-            '''
+            SELECT {comp_id}, id, sf_guard_user_id, "type", description, ip, created_at, updated_at, current_timestamp as inserted_at
+            FROM {table}_{comp_id}_temp
+        '''
         cursor.execute(query)
         logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+        # deleting temp table
+        query = f'''
+            DROP TABLE {table}_{comp_id}_temp
+        '''
+        cursor.execute(query)
+        logging.info(f'Temp table is dropped')
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
@@ -1282,20 +1304,43 @@ def upsert_sf_guard_user_group(schema, table, date_column, **kwargs):
         logging.info(f'Table {schema}.{table} created successfully')
     for comp_id, ext_schema in customers:
         logging.info(f'Task is starting for company {comp_id}')
-        # inserting new data with increment to target
+        # creating temp table with new data increment
+        query = f'''
+            CREATE temporary TABLE {table}_{comp_id}_temp as
+            SELECT *
+            FROM {ext_schema}.{table}
+            WHERE {date_column} > (
+                SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+                FROM {schema}.{table}
+                WHERE comp_id = {comp_id}
+            ) and {date_column} < CURRENT_DATE + interval '8 hours'
+        '''
+        cursor.execute(query)
+        logging.info(f'Temp table is created')
+        # deleting from target table data that were updated
+        query = f'''
+            DELETE FROM {schema}.{table}
+            USING {table}_{comp_id}_temp
+            WHERE {schema}.{table}.comp_id = {comp_id}
+                AND {schema}.{table}.user_id = {table}_{comp_id}_temp.user_id
+                AND {schema}.{table}.group_id = {table}_{comp_id}_temp.group_id
+        '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+        # inserting increment to target table
         query = f'''
             INSERT INTO {schema}.{table}
-            SELECT {comp_id} as comp_id, user_id, group_id, created_at, updated_at, current_timestamp as inserted_at
-            FROM {ext_schema}.{table}
-            WHERE
-                {date_column} > (
-                    SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-                    FROM {schema}.{table}
-                    WHERE comp_id = {comp_id} 
-                ) AND {date_column} < CURRENT_DATE + interval '8 hours'
-            '''
+            SELECT {comp_id}, user_id, group_id, created_at, updated_at, current_timestamp as inserted_at
+            FROM {table}_{comp_id}_temp
+        '''
         cursor.execute(query)
         logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+        # deleting temp table
+        query = f'''
+            DROP TABLE {table}_{comp_id}_temp
+        '''
+        cursor.execute(query)
+        logging.info(f'Temp table is dropped')
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
@@ -1334,20 +1379,42 @@ def upsert_sf_guard_group(schema, table, date_column, **kwargs):
         logging.info(f'Table {schema}.{table} created successfully')
     for comp_id, ext_schema in customers:
         logging.info(f'Task is starting for company {comp_id}')
-        # inserting new data with increment to target
+        # creating temp table with new data increment
+        query = f'''
+            CREATE temporary TABLE {table}_{comp_id}_temp as
+            SELECT *
+            FROM {ext_schema}.{table}
+            WHERE {date_column} > (
+                SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+                FROM {schema}.{table}
+                WHERE comp_id = {comp_id}
+            ) and {date_column} < CURRENT_DATE + interval '8 hours'
+        '''
+        cursor.execute(query)
+        logging.info(f'Temp table is created')
+        # deleting from target table data that were updated
+        query = f'''
+            DELETE FROM {schema}.{table}
+            USING {table}_{comp_id}_temp
+            WHERE {schema}.{table}.comp_id = {comp_id}
+                AND {schema}.{table}.id = {table}_{comp_id}_temp.id
+        '''
+        cursor.execute(query)
+        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+        # inserting increment to target table
         query = f'''
             INSERT INTO {schema}.{table}
-            SELECT {comp_id} as comp_id, id, "name", description, is_main, created_at, updated_at, current_timestamp as inserted_at
-            FROM {ext_schema}.{table}
-            WHERE
-                {date_column} > (
-                    SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-                    FROM {schema}.{table}
-                    WHERE comp_id = {comp_id} 
-                ) AND {date_column} < CURRENT_DATE + interval '8 hours'
-            '''
+            SELECT {comp_id}, id, "name", description, is_main, created_at, updated_at, current_timestamp as inserted_at
+            FROM {table}_{comp_id}_temp
+        '''
         cursor.execute(query)
         logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+        # deleting temp table
+        query = f'''
+            DROP TABLE {table}_{comp_id}_temp
+        '''
+        cursor.execute(query)
+        logging.info(f'Temp table is dropped')
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
