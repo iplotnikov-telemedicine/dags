@@ -294,8 +294,9 @@ def upsert_discounts(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -348,8 +349,9 @@ def upsert_patient_group_ref(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -402,8 +404,9 @@ def upsert_patient_group(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -475,8 +478,9 @@ def upsert_patients(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -511,8 +515,9 @@ def upsert_product_categories(schema, table, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -544,8 +549,9 @@ def upsert_product_filter_index(schema, table, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -606,8 +612,9 @@ def upsert_product_transactions(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -662,8 +669,9 @@ def upsert_product_vendors(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -737,8 +745,9 @@ def upsert_products(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -772,8 +781,9 @@ def upsert_register_log(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -834,8 +844,9 @@ def upsert_register(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 
@@ -895,8 +906,9 @@ def upsert_sf_guard_user(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -954,8 +966,9 @@ def upsert_tax_payment(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -1023,8 +1036,9 @@ def upsert_warehouse_orders(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -1087,8 +1101,9 @@ def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -1147,8 +1162,9 @@ def upsert_service_history(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -1207,8 +1223,9 @@ def upsert_product_checkins(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -1241,8 +1258,9 @@ def upsert_product_office_qty(schema, table, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -1295,8 +1313,9 @@ def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -1371,8 +1390,9 @@ def upsert_user_activity_record(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -1448,8 +1468,9 @@ def upsert_sf_guard_user_group(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
@@ -1524,8 +1545,9 @@ def upsert_sf_guard_group(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task_group
