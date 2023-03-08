@@ -190,92 +190,94 @@ def upsert_brands(customer_data, schema, table, date_column):
 
 
 @task(max_active_tis_per_dag=1)
-def upsert_company_config(schema, table, **kwargs):
-    ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
+def upsert_company_config(customer_data, schema, table):
+    (comp_id, ext_schema) = customer_data
+    # ti, task_id = kwargs['ti'], kwargs['task'].task_id
+    # customers = ti.xcom_pull(key='customers', task_ids='get_customers')
     # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
-        logging.info(f'Task is starting for company {comp_id}')
-        # deleting old data from target
-        query = f'''
-            DELETE FROM {schema}.{table}
-            WHERE comp_id = {comp_id}
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
-        # inserting new data to target
-        query = f'''
-            INSERT INTO {schema}.{table}
-            SELECT {comp_id}, id, "name", human_name, value
-            FROM {ext_schema}.{table}
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
-        # commit to target DB
-        redshift_conn.commit()
-        logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+    # max_comp_id = int(Variable.get(task_id, 0))
+    # customers = [c for c in customers if c[0] > max_comp_id]
+    # for comp_id, ext_schema in customers:
+    logging.info(f'Task is starting for company {comp_id}')
+    # deleting old data from target
+    query = f'''
+        DELETE FROM {schema}.{table}
+        WHERE comp_id = {comp_id}
+    '''
+    cursor.execute(query)
+    logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+    # inserting new data to target
+    query = f'''
+        INSERT INTO {schema}.{table}
+        SELECT {comp_id}, id, "name", human_name, value
+        FROM {ext_schema}.{table}
+    '''
+    cursor.execute(query)
+    logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+    # commit to target DB
+    redshift_conn.commit()
+    logging.info(f'Task is finished for company {comp_id}')
+    #     Variable.set(task_id, comp_id)
+    # Variable.set(task_id, 0)
 
 
 @task(max_active_tis_per_dag=1)
-def upsert_discounts(schema, table, date_column, **kwargs):
-    ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
+def upsert_discounts(customer_data, schema, table, date_column):
+    # ti, task_id = kwargs['ti'], kwargs['task'].task_id
+    # customers = ti.xcom_pull(key='customers', task_ids='get_customers')
     # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
-        logging.info(f'Task is starting for company {comp_id}')
-        # creating temp table with new data increment
-        query = f'''
-            CREATE temporary TABLE {table}_{comp_id}_temp as
-            SELECT *
-            from {ext_schema}.{table}
-            where {date_column} > (
-                select coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-                from {schema}.{table}
-                where comp_id = {comp_id}
-            ) and {date_column} < CURRENT_DATE + interval '8 hours'
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is created')
-        # deleting from target table data that were updated
-        query = f'''
-            DELETE FROM {schema}.{table}
-            USING {table}_{comp_id}_temp
-            WHERE {schema}.{table}.comp_id = {comp_id}
-                AND {schema}.{table}.id = {table}_{comp_id}_temp.id
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
-        # inserting increment to target table
-        query = f'''
-            INSERT INTO {schema}.{table}
-            SELECT {comp_id}, id, "name", "type", value, sync_created_at, sync_updated_at, 
-                deleted_at, use_type, apply_type, is_pos, is_potify, promo_code, status, 
-                is_individual_use_only, is_exclude_items_on_special, start_date, end_date, 
-                is_ongoing, happy_weekdays, min_subtotal_price, uses_count, is_once_per_patient, 
-                bogo_buy, bogo_get, bogo_multiple, is_first_time_patient, is_show_promo_code_on_potify, 
-                max_subtotal_price, display_name, is_show_name_on_collection_tile, image, tv_image, 
-                product_filter_id, created_at, updated_at, hide_banner, display_priority
-            FROM {table}_{comp_id}_temp
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
-        # deleting temp table
-        query = f'''
-            DROP TABLE {table}_{comp_id}_temp
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is dropped')
-        # commit to target DB
-        redshift_conn.commit()
-        logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+    # max_comp_id = int(Variable.get(task_id, 0))
+    # customers = [c for c in customers if c[0] > max_comp_id]
+    (comp_id, ext_schema) = customer_data
+    # for comp_id, ext_schema in customers:
+    logging.info(f'Task is starting for company {comp_id}')
+    # creating temp table with new data increment
+    query = f'''
+        CREATE temporary TABLE {table}_{comp_id}_temp as
+        SELECT *
+        from {ext_schema}.{table}
+        where {date_column} > (
+            select coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+            from {schema}.{table}
+            where comp_id = {comp_id}
+        ) and {date_column} < CURRENT_DATE + interval '8 hours'
+    '''
+    cursor.execute(query)
+    logging.info(f'Temp table is created')
+    # deleting from target table data that were updated
+    query = f'''
+        DELETE FROM {schema}.{table}
+        USING {table}_{comp_id}_temp
+        WHERE {schema}.{table}.comp_id = {comp_id}
+            AND {schema}.{table}.id = {table}_{comp_id}_temp.id
+    '''
+    cursor.execute(query)
+    logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+    # inserting increment to target table
+    query = f'''
+        INSERT INTO {schema}.{table}
+        SELECT {comp_id}, id, "name", "type", value, sync_created_at, sync_updated_at, 
+            deleted_at, use_type, apply_type, is_pos, is_potify, promo_code, status, 
+            is_individual_use_only, is_exclude_items_on_special, start_date, end_date, 
+            is_ongoing, happy_weekdays, min_subtotal_price, uses_count, is_once_per_patient, 
+            bogo_buy, bogo_get, bogo_multiple, is_first_time_patient, is_show_promo_code_on_potify, 
+            max_subtotal_price, display_name, is_show_name_on_collection_tile, image, tv_image, 
+            product_filter_id, created_at, updated_at, hide_banner, display_priority
+        FROM {table}_{comp_id}_temp
+    '''
+    cursor.execute(query)
+    logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+    # deleting temp table
+    query = f'''
+        DROP TABLE {table}_{comp_id}_temp
+    '''
+    cursor.execute(query)
+    logging.info(f'Temp table is dropped')
+    # commit to target DB
+    redshift_conn.commit()
+    logging.info(f'Task is finished for company {comp_id}')
+    #     Variable.set(task_id, comp_id)
+    # Variable.set(task_id, 0)
 
 
 @task(max_active_tis_per_dag=1)
