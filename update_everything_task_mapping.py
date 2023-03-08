@@ -113,7 +113,6 @@ def get_customers(ti=None):
 
 
 @task(max_active_tis_per_dag=1)
-# @task()
 def upsert_brands(customer_data, schema, table, date_column):
     (comp_id, ext_schema) = customer_data
     # ti, task_id = kwargs['ti'], kwargs['task'].task_id
@@ -190,7 +189,7 @@ def upsert_brands(customer_data, schema, table, date_column):
     # Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_company_config(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -221,7 +220,7 @@ def upsert_company_config(schema, table, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_discounts(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -279,7 +278,7 @@ def upsert_discounts(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_patient_group_ref(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -331,7 +330,7 @@ def upsert_patient_group_ref(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_patient_group(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -383,7 +382,7 @@ def upsert_patient_group(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_patients(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -454,7 +453,7 @@ def upsert_patients(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_categories(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -488,7 +487,7 @@ def upsert_product_categories(schema, table, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_filter_index(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -519,7 +518,7 @@ def upsert_product_filter_index(schema, table, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_transactions(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -553,7 +552,7 @@ def upsert_product_transactions(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_vendors(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -607,7 +606,7 @@ def upsert_product_vendors(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_products(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -680,7 +679,7 @@ def upsert_products(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_register_log(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -713,7 +712,7 @@ def upsert_register_log(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_register(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -773,7 +772,7 @@ def upsert_register(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_tax_payment(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -830,7 +829,7 @@ def upsert_tax_payment(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_warehouse_orders(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -897,7 +896,7 @@ def upsert_warehouse_orders(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -956,7 +955,7 @@ def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_service_history(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -1014,7 +1013,7 @@ def upsert_service_history(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_checkins(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -1072,7 +1071,7 @@ def upsert_product_checkins(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_office_qty(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -1104,7 +1103,7 @@ def upsert_product_office_qty(schema, table, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -1160,25 +1159,25 @@ def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
 def upsert_tables(get_customers_task, schema='mock'):
     logging.info(f' Total customers list: {get_customers_task}')
     upsert_brands.partial(schema=schema, table='brands', date_column='sync_updated_at').expand(customer_data=get_customers_task)
-    # upsert_company_config.partial(schema, table='company_config').expand(customer_data=customers)
-    # upsert_discounts.partial(schema, table='discounts', date_column='updated_at').expand(customer_data=customers)
-    # upsert_patient_group_ref.partial(schema, table='patient_group_ref', date_column='sync_updated_at').expand(customer_data=customers)
-    # upsert_patient_group.partial(schema, table='patient_group', date_column='sync_updated_at').expand(customer_data=customers)
-    # upsert_patients.partial(schema, table='patients', date_column='updated_at').expand(customer_data=customers)
-    # upsert_product_categories.partial(schema, table='product_categories').expand(customer_data=customers)
-    # upsert_product_checkins.partial(schema, table='product_checkins', date_column='sync_updated_at').expand(customer_data=customers)
-    # upsert_product_filter_index.partial(schema, table='product_filter_index').expand(customer_data=customers)
-    # upsert_product_office_qty.partial(schema, table='product_office_qty').expand(customer_data=customers)
-    # upsert_product_transactions.partial(schema, table='product_transactions', date_column='date').expand(customer_data=customers)
-    # upsert_product_vendors.partial(schema, table='product_vendors', date_column='updated_at').expand(customer_data=customers)
-    # upsert_products.partial(schema, table='products', date_column='sync_updated_at').expand(customer_data=customers)
-    # upsert_register_log.partial(schema, table='register_log', date_column='created_at').expand(customer_data=customers)
-    # upsert_register.partial(schema, table='register', date_column='updated_at').expand(customer_data=customers)
-    # upsert_service_history.partial(schema, table='service_history', date_column='updated_at').expand(customer_data=customers)
-    # upsert_tax_payment.partial(schema, table='tax_payment', date_column='updated_at').expand(customer_data=customers)
-    # upsert_warehouse_orders.partial(schema, table='warehouse_orders', date_column='updated_at').expand(customer_data=customers)
-    # upsert_warehouse_order_items.partial(schema, table='warehouse_order_items', date_column='updated_at').expand(customer_data=customers)
-    # upsert_warehouse_order_logs.partial(schema, table='warehouse_order_logs', date_column='created_at').expand(customer_data=customers)
+    upsert_company_config.partial(schema=schema, table='company_config').expand(customer_data=get_customers_task)
+    upsert_discounts.partial(schema=schema, table='discounts', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_patient_group_ref.partial(schema=schema, table='patient_group_ref', date_column='sync_updated_at').expand(customer_data=get_customers_task)
+    # upsert_patient_group.partial(schema=schema, table='patient_group', date_column='sync_updated_at').expand(customer_data=get_customers_task)
+    # upsert_patients.partial(schema=schema, table='patients', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_product_categories.partial(schema=schema, table='product_categories').expand(customer_data=get_customers_task)
+    # upsert_product_checkins.partial(schema=schema, table='product_checkins', date_column='sync_updated_at').expand(customer_data=get_customers_task)
+    # upsert_product_filter_index.partial(schema=schema, table='product_filter_index').expand(customer_data=get_customers_task)
+    # upsert_product_office_qty.partial(schema=schema, table='product_office_qty').expand(customer_data=get_customers_task)
+    # upsert_product_transactions.partial(schema=schema, table='product_transactions', date_column='date').expand(customer_data=get_customers_task)
+    # upsert_product_vendors.partial(schema=schema, table='product_vendors', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_products.partial(schema=schema, table='products', date_column='sync_updated_at').expand(customer_data=get_customers_task)
+    # upsert_register_log.partial(schema=schema, table='register_log', date_column='created_at').expand(customer_data=get_customers_task)
+    # upsert_register.partial(schema=schema, table='register', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_service_history.partial(schema=schema, table='service_history', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_tax_payment.partial(schema=schema, table='tax_payment', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_warehouse_orders.partial(schema=schema, table='warehouse_orders', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_warehouse_order_items.partial(schema=schema, table='warehouse_order_items', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_warehouse_order_logs.partial(schema=schema, table='warehouse_order_logs', date_column='created_at').expand(customer_data=get_customers_task)
 
 
 default_args = {
