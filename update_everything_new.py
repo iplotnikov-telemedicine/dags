@@ -1626,6 +1626,7 @@ with DAG(
         task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
+        exclude=["config.materialized:view"]
     )
     dbt_snapshot = DbtSnapshotOperator(
         task_id="dbt_snapshot",
