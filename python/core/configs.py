@@ -1,9 +1,8 @@
 import yaml
+import os
 from python.core.datamodels import JobConfig
-from yml.path import get_yml_path
 
-
-yml_path = get_yml_path()
+yml_path = os.path.join(os.getcwd(), 'yml')
 
 
 def get_job_config(job) -> JobConfig:
