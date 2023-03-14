@@ -1,0 +1,105 @@
+database: dev
+schema: mock
+table: sf_guard_user
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: staff_category_id
+  -
+    source: first_name
+  -
+    source: last_name
+  -
+    source: last_office
+  -
+    source: email_address
+  -
+    source: username
+  -
+    source: photo
+  -
+    source: dmv
+  -
+    source: address
+  -
+    source: mobile_phone
+  -
+    source: phone
+  -
+    source: algorithm
+  -
+    source: "type"
+  -
+    source: is_admin
+  -
+    source: access_type
+  -
+    source: office_access
+  -
+    source: is_active
+  -
+    source: is_super_admin
+  -
+    source: last_login
+  -
+    source: timetracker_autocheckout_time
+  -
+    source: timetracker_hour_rate
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: patient_id
+  -
+    source: is_verified
+  -
+    source: is_dmv_verified
+  -
+    source: whmcs_clientid
+  -
+    source: whmcs_email
+  -
+    source: whmcs_password
+  -
+    source: user_pin
+  -
+    source: manager_pin
+  -
+    source: autologin_hash
+  -
+    source: trial_title
+  -
+    source: trial_indica_description
+  -
+    source: trial_medibook_description
+  -
+    source: trial_photo_url
+  -
+    source: is_trial_support
+  -
+    source: sync_created_at
+  -
+    source: sync_updated_at
+  -
+    source: wcii_hash
+  -
+    source: agilecrm_contact_id
+  -
+    source: deleted_at
+  -
+    source: storage_access
+  -
+    source: staff_id
+  -
+    source: driver_license_number
+  -
+    source: occupational_driver_license
+  -
+    source: external_id
+  -
+    source: potify_driver_id

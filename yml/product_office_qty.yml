@@ -1,0 +1,25 @@
+database: dev
+schema: mock
+table: product_office_qty
+load_type: full
+increment_column: 
+pk: ['poq_id']
+map:
+  -
+    source: poq_id
+  -
+    source: poq_prod_id
+  -
+    source: poq_office_id
+  -
+    source: poq_qty
+  -
+    source: poq_item_type
+  -
+    source: sync_created_at
+  -
+    source: sync_updated_at
+  -
+    source: reserved_qty
+  -
+    source: paused_qty

@@ -1,0 +1,95 @@
+database: dev
+schema: mock
+table: service_history
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: service_id
+  -
+    source: office_id
+  -
+    source: user_id
+  -
+    source: patient_id
+  -
+    source: doctor_id
+  -
+    source: object_id
+  -
+    source: object_type
+  -
+    source: referal_id
+  -
+    source: notes
+  -
+    source: amount
+  -
+    source: edit_amount
+  -
+    source: edit_reason
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: ad_campaign_id
+  -
+    source: ad_campaign_patient_type_id
+  -
+    source: intake
+  -
+    source: exam
+  -
+    source: has_intake_for_approving
+  -
+    source: has_exam_for_approving
+  -
+    source: order_id
+  -
+    source: amount_by_referral_points
+  -
+    source: count_referral_points
+  -
+    source: register_id
+  -
+    source: balance
+  -
+    source: method1_amount
+  -
+    source: method2_amount
+  -
+    source: method3_amount
+  -
+    source: method4_amount
+  -
+    source: method5_amount
+  -
+    source: method6_amount
+  -
+    source: method7_amount
+  -
+    source: profit
+  -
+    source: is_take_payment
+  -
+    source: tax
+  -
+    source: dc_cash_change
+  -
+    source: is_dejavoo_payment
+  -
+    source: "type"
+  -
+    source: cost
+  -
+    source: discount
+  -
+    source: "free"
+  -
+    source: payment_method
+  -
+    source: payment_amount

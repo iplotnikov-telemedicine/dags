@@ -1,0 +1,41 @@
+database: dev
+schema: mock
+table: product_categories
+load_type: full
+increment_column: 
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: "name"
+  -
+    source: description
+  -
+    source: photo
+  -
+    source: lft
+  -
+    source: rgt
+  -
+    source: "level"
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: is_system
+  -
+    source: sync_updated_at
+  -
+    source: sync_created_at
+  -
+    source: icon_name
+  -
+    source: activation_time
+  -
+    source: label_template_internal_id
+  -
+    source: icon_color
+  -
+    source: system_id

@@ -16,7 +16,7 @@ def fail_slack_alert(context):
         :red_circle: Failed
         *Task*: {context.get('task_instance').task_id}
         *Dag*: {context.get('task_instance').dag_id}
-        *Execution Time*: {context.get('ds')}
+        *Execution Time*: {context.get('ts')}
         *Log Url*: {context.get('task_instance').log_url}
     """
     failed_alert = SlackWebhookOperator(
@@ -34,7 +34,7 @@ def retry_slack_alert(context):
         :large_yellow_circle: Retry
         *Task*: {context.get('task_instance').task_id}
         *Dag*: {context.get('task_instance').dag_id}
-        *Execution Time*: {context.get('ds')}
+        *Execution Time*: {context.get('ts')}
         *Log Url*: {context.get('task_instance').log_url}
     """
     failed_alert = SlackWebhookOperator(

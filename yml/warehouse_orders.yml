@@ -1,0 +1,193 @@
+database: dev
+schema: mock
+table: warehouse_orders
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: "number"
+  -
+    source: patient_id
+  -
+    source: "type"
+  -
+    source: status
+  -
+    source: order_status
+  -
+    source: payment_status
+  -
+    source: fulfillment_status
+  -
+    source: shipment_status
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: charge_by
+  -
+    source: amount
+  -
+    source: referral_discount_value
+  -
+    source: discount_type_bak
+  -
+    source: total_amount
+  -
+    source: discount_has_changed
+  -
+    source: office_id
+  -
+    source: sum_tax
+  -
+    source: sum_discount
+  -
+    source: sum_free_discount
+  -
+    source: sum_income
+  -
+    source: custom_discount_value
+  -
+    source: custom_discount_type_bak
+  -
+    source: delivery_address
+  -
+    source: delivery_city
+  -
+    source: delivery_state
+  -
+    source: delivery_zip
+  -
+    source: delivery_phone
+  -
+    source: delivery_latitude
+  -
+    source: delivery_longitude
+  -
+    source: shipping_method_id
+  -
+    source: shipping_amount
+  -
+    source: courier_register_id
+  -
+    source: "comment"
+  -
+    source: sync_updated_at
+  -
+    source: sync_created_at
+  -
+    source: register_id
+  -
+    source: discount_id
+  -
+    source: referral_discount_type
+  -
+    source: custom_discount_type
+  -
+    source: balance
+  -
+    source: method1_amount
+  -
+    source: method2_amount
+  -
+    source: method3_amount
+  -
+    source: method4_amount
+  -
+    source: method5_amount
+  -
+    source: method6_amount
+  -
+    source: method7_amount
+  -
+    source: processing_register_id
+  -
+    source: photo
+  -
+    source: delivery_datetime
+  -
+    source: delivery_address_id
+  -
+    source: change_amount
+  -
+    source: tip_amount
+  -
+    source: placed_at
+  -
+    source: completed_at
+  -
+    source: confirmed_at
+  -
+    source: preferred_payment_method
+  -
+    source: is_bonus_point_as_discount
+  -
+    source: marketplace
+  -
+    source: applied_potify_credits
+  -
+    source: asap_delivery
+  -
+    source: cashier_id
+  -
+    source: is_transit_started
+  -
+    source: metrc_status
+  -
+    source: cashier_name
+  -
+    source: patient_type
+  -
+    source: register_name
+  -
+    source: courier_id
+  -
+    source: courier_name
+  -
+    source: courier_register_name
+  -
+    source: is_verified_by_courier
+  -
+    source: is_shipped
+  -
+    source: shipping_tracking_number
+  -
+    source: patient_has_caregiver
+  -
+    source: patient_is_tax_exempt
+  -
+    source: metrc_substatus
+  -
+    source: checkout_staff_id
+  -
+    source: pos_mode
+  -
+    source: signature
+  -
+    source: delivery_method
+  -
+    source: courier_number
+  -
+    source: patient_rec_number
+  -
+    source: office_zip_name
+  -
+    source: refund_type
+  -
+    source: returned_at
+  -
+    source: shipping_method_name
+  -
+    source: tax_tier_version_id
+  -
+    source: vehicle
+  -
+    source: metrc_delivery_status
+  -
+    source: resend_staff_id
+  -
+    source: delivery_estimated_time_of_arrival

@@ -1,0 +1,111 @@
+database: dev
+schema: mock
+table: warehouse_order_items
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: order_id
+  -
+    source: product_id
+  -
+    source: "name"
+  -
+    source: descr
+  -
+    source: price_type
+  -
+    source: price_per
+  -
+    source: charge_by
+  -
+    source: price
+  -
+    source: qty
+  -
+    source: qty_free
+  -
+    source: amount
+  -
+    source: tax
+  -
+    source: discount_value
+  -
+    source: discount_type_bak
+  -
+    source: total_amount
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: is_charge_by_order
+  -
+    source: is_free
+  -
+    source: free_discount
+  -
+    source: income
+  -
+    source: discount_amount
+  -
+    source: item_type
+  -
+    source: count
+  -
+    source: special_id
+  -
+    source: special_item_id
+  -
+    source: is_half_eighth
+  -
+    source: is_returned
+  -
+    source: returned_amount
+  -
+    source: discount_type
+  -
+    source: free_amount
+  -
+    source: paid_amount
+  -
+    source: wcii_cart_item
+  -
+    source: sync_created_at
+  -
+    source: sync_updated_at
+  -
+    source: product_checkin_id
+  -
+    source: is_excise
+  -
+    source: returned_at
+  -
+    source: is_marijuana_product
+  -
+    source: product_is_tax_exempt
+  -
+    source: is_metrc
+  -
+    source: is_under_package_control
+  -
+    source: base_amount
+  -
+    source: discount_id
+  -
+    source: delivery_tax
+  -
+    source: discount_count
+  -
+    source: is_exchanged
+  -
+    source: exchanged_at
+  -
+    source: product_brutto_weight
+  -
+    source: product_brutto_weight_validation
+  -
+    source: confirmed_at

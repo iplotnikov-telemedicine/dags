@@ -1,0 +1,89 @@
+database: dev
+schema: mock
+table: product_checkins
+load_type: increment_with_delete
+increment_column: sync_updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: product_id
+  -
+    source: vendor_id
+  -
+    source: user_id
+  -
+    source: qty
+  -
+    source: price
+  -
+    source: "date"
+  -
+    source: status
+  -
+    source: balance
+  -
+    source: note
+  -
+    source: batch_id
+  -
+    source: lab_result_id
+  -
+    source: has_lab_result
+  -
+    source: uid
+  -
+    source: harvest_date
+  -
+    source: sync_created_at
+  -
+    source: sync_updated_at
+  -
+    source: opc
+  -
+    source: sale_qty
+  -
+    source: office_id
+  -
+    source: is_metrc
+  -
+    source: available_qty
+  -
+    source: is_finished
+  -
+    source: producer_id
+  -
+    source: vendor_type
+  -
+    source: vendor_name
+  -
+    source: facility_id
+  -
+    source: is_special
+  -
+    source: packaged_date
+  -
+    source: best_by_date
+  -
+    source: deleted_at
+  -
+    source: production_run
+  -
+    source: is_under_package_control
+  -
+    source: is_form_modified
+  -
+    source: metrc_initial_quantity
+  -
+    source: external_barcode
+  -
+    source: packaged_by_id
+  -
+    source: manifest
+  -
+    source: is_sample_package
+  -
+    source: paused_to_datetime
+  -
+    source: excise_tax_paid

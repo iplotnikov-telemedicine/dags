@@ -1,0 +1,13 @@
+database: dev
+schema: mock
+table: product_filter_index
+load_type: full
+increment_column: 
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: product_id
+  -
+    source: product_filter_id

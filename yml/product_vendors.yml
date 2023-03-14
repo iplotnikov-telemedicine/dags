@@ -1,0 +1,47 @@
+database: dev
+schema: mock
+table: product_vendors
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: name
+  -
+    source: description
+  -
+    source: phone
+  -
+    source: email
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: patient_id
+  -
+    source: address
+  -
+    source: fax
+  -
+    source: skype
+  -
+    source: balance
+  -
+    source: sync_updated_at
+  -
+    source: sync_created_at
+  -
+    source: deleted_at
+  -
+    source: license
+  -
+    source: metrc_name
+  -
+    source: metrc_license
+  -
+    source: vendor_type
+  -
+    source: registration_certificate

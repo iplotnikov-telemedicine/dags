@@ -1,0 +1,81 @@
+database: dev
+schema: mock
+table: discounts
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: "name"
+  -
+    source: "type"
+  -
+    source: value
+  -
+    source: sync_created_at
+  -
+    source: sync_updated_at
+  -
+    source: deleted_at
+  -
+    source: use_type
+  -
+    source: apply_type
+  -
+    source: is_pos
+  -
+    source: is_potify
+  -
+    source: promo_code
+  -
+    source: status
+  -
+    source: is_individual_use_only
+  -
+    source: is_exclude_items_on_special
+  -
+    source: start_date
+  -
+    source: end_date
+  -
+    source: is_ongoing
+  -
+    source: happy_weekdays
+  -
+    source: min_subtotal_price
+  -
+    source: uses_count
+  -
+    source: is_once_per_patient
+  -
+    source: bogo_buy
+  -
+    source: bogo_get
+  -
+    source: bogo_multiple
+  -
+    source: is_first_time_patient
+  -
+    source: is_show_promo_code_on_potify
+  -
+    source: max_subtotal_price
+  -
+    source: display_name
+  -
+    source: is_show_name_on_collection_tile
+  -
+    source: image
+  -
+    source: tv_image
+  -
+    source: product_filter_id
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: hide_banner
+  -
+    source: display_priority

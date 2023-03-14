@@ -1,0 +1,17 @@
+database: dev
+schema: mock
+table: patient_group_ref
+load_type: increment_with_delete
+increment_column: sync_updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: patient_id
+  -
+    source: group_id
+  -
+    source: sync_created_at
+  -
+    source: sync_updated_at

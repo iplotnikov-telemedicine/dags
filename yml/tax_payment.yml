@@ -1,0 +1,63 @@
+database: dev
+schema: mock
+table: tax_payment
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: order_id
+  -
+    source: order_item_id
+  -
+    source: product_id
+  -
+    source: state
+  -
+    source: county
+  -
+    source: city
+  -
+    source: state_tax
+  -
+    source: state_mj_tax
+  -
+    source: county_tax
+  -
+    source: county_mj_tax
+  -
+    source: city_tax
+  -
+    source: city_mj_tax
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: is_deleted
+  -
+    source: state_sales_tax
+  -
+    source: county_sales_tax
+  -
+    source: city_sales_tax
+  -
+    source: state_local_tax
+  -
+    source: county_local_tax
+  -
+    source: city_local_tax
+  -
+    source: excise_tax
+  -
+    source: state_delivery_sales_tax
+  -
+    source: county_delivery_sales_tax
+  -
+    source: city_delivery_sales_tax
+  -
+    source: city_delivery_local_tax
+  -
+    source: excise_delivery_tax

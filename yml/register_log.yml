@@ -1,0 +1,71 @@
+database: dev
+schema: mock
+table: register_log
+load_type: increment
+increment_column: created_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: register_id
+  -
+    source: opening_amount
+  -
+    source: cash_sales
+  -
+    source: drops
+  -
+    source: expected_drawer
+  -
+    source: actual_drawer
+  -
+    source: over_drawer
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: "type"
+  -
+    source: service_history_id
+  -
+    source: sf_guard_user_id
+  -
+    source: amount
+  -
+    source: register_type
+  -
+    source: total_cost
+  -
+    source: total_profit
+  -
+    source: discount
+  -
+    source: tax
+  -
+    source: total_amount
+  -
+    source: method1_amount
+  -
+    source: method2_amount
+  -
+    source: method3_amount
+  -
+    source: method4_amount
+  -
+    source: method5_amount
+  -
+    source: method6_amount
+  -
+    source: method7_amount
+  -
+    source: cash_returns
+  -
+    source: delivered_amount
+  -
+    source: pending_amount
+  -
+    source: dc_cash_change
+  -
+    source: vehicle_id

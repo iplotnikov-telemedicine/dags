@@ -29,7 +29,7 @@ def start_slack_alert(context):
         :rocket: Start
         *Dag*: {context.get('task_instance').dag_id}
         *Run ID*: {context.get('task_instance').run_id}
-        *Execution Time*: {context.get('execution_date')}
+        *Execution Time*: {context.get('ts')}
         *Log Url*: {context.get('task_instance').log_url}
     """
     alert = SlackWebhookOperator(
@@ -47,7 +47,7 @@ def failure_slack_alert(context):
         :red_circle: Failure
         *Task*: {context.get('task_instance').task_id}
         *Dag*: {context.get('task_instance').dag_id}
-        *Execution Time*: {context.get('execution_date')}
+        *Execution Time*: {context.get('ts')}
         *Log Url*: {context.get('task_instance').log_url}
     """
     alert = SlackWebhookOperator(
@@ -65,7 +65,7 @@ def retry_slack_alert(context):
         :large_yellow_circle: Retry
         *Task*: {context.get('task_instance').task_id}
         *Dag*: {context.get('task_instance').dag_id}
-        *Execution Time*: {context.get('execution_date')}
+        *Execution Time*: {context.get('ts')}
         *Log Url*: {context.get('task_instance').log_url}
     """
     alert = SlackWebhookOperator(
@@ -83,7 +83,7 @@ def success_slack_alert(context):
         :large_green_circle: Success
         *Dag*: {context.get('task_instance').dag_id}
         *Run ID*: {context.get('task_instance').run_id}
-        *Execution Time*: {context.get('execution_date')}
+        *Execution Time*: {context.get('ts')}
         *Log Url*: {context.get('task_instance').log_url}
     """
     alert = SlackWebhookOperator(

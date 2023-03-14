@@ -1,0 +1,25 @@
+database: dev
+schema: mock
+table: warehouse_order_logs
+load_type: increment 
+increment_column: created_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: order_id
+  -
+    source: "type"
+  -
+    source: sf_guard_user_id
+  -
+    source: sf_guard_user_name
+  -
+    source: order_courier_register_id
+  -
+    source: created_at
+  -
+    source: register_id
+  -
+    source: application

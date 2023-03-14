@@ -1,0 +1,15 @@
+database: dev
+schema: mock
+table: company_config
+load_type: full
+increment_column: 
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: "name"
+  -
+    source: human_name
+  -
+    source: value
