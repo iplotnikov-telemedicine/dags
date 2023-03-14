@@ -272,3 +272,4 @@ with DAG(
 
 # start_alert >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
 upsert_tables_group
+
