@@ -1,40 +1,25 @@
 database: dev
-schema: public
+schema: mock
 table: product_office_qty
 load_type: full
 increment_column: 
 pk: ['poq_id']
-source:
-  schema: public
-  table: product_office_qty
-target:
-  schema: mock
-  table: product_office_qty
 map:
   -
     source: poq_id
-    target: poq_id
   -
     source: poq_prod_id
-    target: poq_prod_id
   -
     source: poq_office_id
-    target: poq_office_id
   -
     source: poq_qty
-    target: poq_qty
   -
     source: poq_item_type
-    target: poq_item_type
   -
     source: sync_created_at
-    target: sync_created_at
   -
     source: sync_updated_at
-    target: sync_updated_at
   -
     source: reserved_qty
-    target: reserved_qty
   -
     source: paused_qty
-    target: paused_qty

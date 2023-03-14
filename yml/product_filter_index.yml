@@ -1,22 +1,13 @@
 database: dev
-schema: public
+schema: mock
 table: product_filter_index
 load_type: full
 increment_column: 
 pk: ['id']
-source:
-  schema: public
-  table: product_filter_index
-target:
-  schema: mock
-  table: product_filter_index
 map:
   -
     source: id
-    target: id
   -
     source: product_id
-    target: product_id
   -
     source: product_filter_id
-    target: product_filter_id

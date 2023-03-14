@@ -1,73 +1,47 @@
 database: dev
-schema: public
+schema: mock
 table: product_vendors
 load_type: increment_with_delete
 increment_column: updated_at
 pk: ['id']
-source:
-  schema: public
-  table: product_vendors
-target:
-  schema: mock
-  table: product_vendors
 map:
   -
     source: id
-    target: id
   -
     source: name
-    target: name
   -
     source: description
-    target: description
   -
     source: phone
-    target: phone
   -
     source: email
-    target: email
   -
     source: created_at
-    target: created_at
   -
     source: updated_at
-    target: updated_at
   -
     source: patient_id
-    target: patient_id
   -
     source: address
-    target: address
   -
     source: fax
-    target: fax
   -
     source: skype
-    target: skype
   -
     source: balance
-    target: balance
   -
     source: sync_updated_at
-    target: sync_updated_at
   -
     source: sync_created_at
-    target: sync_created_at
   -
     source: deleted_at
-    target: deleted_at
   -
     source: license
-    target: license
   -
     source: metrc_name
-    target: metrc_name
   -
     source: metrc_license
-    target: metrc_license
   -
     source: vendor_type
-    target: vendor_type
   -
     source: registration_certificate
-    target: registration_certificate

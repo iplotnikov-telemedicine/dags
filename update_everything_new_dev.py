@@ -99,30 +99,7 @@ cursor = redshift_conn.cursor()
 
 
 @task
-def get_customers(ti=None, **kwargs):
-    comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
-    if comp_id_list:
-        condition = f"int_customers.comp_id IN ({', '.join(list(map(str, comp_id_list)))})"
-    else:
-        condition = "int_customers.potify_sync_entity_updated_at >= current_date - interval '3 day'"
-    cursor = redshift_conn.cursor()
-    query = f'''
-        SELECT int_customers.comp_id, TRIM(svv_external_schemas.schemaname) as schemaname
-        FROM test.int_customers
-        INNER JOIN svv_external_schemas
-        ON int_customers.comp_db_name = svv_external_schemas.databasename
-        WHERE {condition}
-        ORDER BY comp_id
-    '''
-    cursor.execute(query)
-    logging.info(query)
-    data = cursor.fetchall()
-    logging.info(f'The number of companies is being processing: {len(data)}')
-    ti.xcom_push(key='customers', value=data)
-
-
-@task
-def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
+def warehouse_order_items(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
     # get max_comp_id from target table and filter list of customers
@@ -212,6 +189,34 @@ def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
+
+def get_tasks():
+    return [
+        {'task_id': 'brands', 'op_args': ['brands']},
+        {'task_id': 'company_config', 'op_args': ['company_config']},
+        {'task_id': 'discounts', 'op_args': ['discounts']},
+        {'task_id': 'patient_group_ref', 'op_args': ['patient_group_ref']},
+        {'task_id': 'patient_group', 'op_args': ['patient_group']},
+        {'task_id': 'patients', 'op_args': ['patients']},
+        {'task_id': 'product_categories', 'op_args': ['product_categories']},
+        {'task_id': 'product_checkins', 'op_args': ['product_checkins']},
+        {'task_id': 'product_filter_index', 'op_args': ['product_filter_index']},
+        {'task_id': 'product_office_qty', 'op_args': ['product_office_qty']},
+        {'task_id': 'product_transactions', 'op_args': ['product_transactions']},
+        {'task_id': 'product_vendors', 'op_args': ['product_vendors']},
+        {'task_id': 'products', 'op_args': ['products']},
+        {'task_id': 'register_log', 'op_args': ['register_log']},
+        {'task_id': 'service_history', 'op_args': ['service_history']},
+        {'task_id': 'sf_guard_group', 'op_args': ['sf_guard_group']},
+        {'task_id': 'sf_guard_user_group', 'op_args': ['sf_guard_user_group']},
+        {'task_id': 'sf_guard_user', 'op_args': ['sf_guard_user']},
+        {'task_id': 'tax_payment', 'op_args': ['tax_payment']},
+        {'task_id': 'user_activity_record', 'op_args': ['user_activity_record']},
+        {'task_id': 'warehouse_order_logs', 'op_args': ['warehouse_order_logs']},
+        {'task_id': 'warehouse_orders', 'op_args': ['warehouse_orders']}
+    ]
+
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -232,130 +237,20 @@ with DAG(
 ) as dag:
     # start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
 
-    get_customers_task = get_customers()
+    # get_customers_task = get_customers()
 
-    with TaskGroup(group_id='upsert_tables_group') as upsert_tables_group:
-        brands = PythonOperator(
-            task_id="brands",
-            python_callable=stg_load,
-            op_args=['brands'],
-        )
-        company_config = PythonOperator(
-            task_id="company_config",
-            python_callable=stg_load,
-            op_args=['company_config'],
-        )
-        discounts = PythonOperator(
-            task_id="discounts",
-            python_callable=stg_load,
-            op_args=['discounts'],
-        )
-        patient_group_ref = PythonOperator(
-            task_id="patient_group_ref",
-            python_callable=stg_load,
-            op_args=['patient_group_ref'],
-        )
-        patient_group = PythonOperator(
-            task_id="patient_group",
-            python_callable=stg_load,
-            op_args=['patient_group'],
-        )
-        patients = PythonOperator(
-            task_id="patients",
-            python_callable=stg_load,
-            op_args=['patients'],
-        )
-        product_categories = PythonOperator(
-            task_id="product_categories",
-            python_callable=stg_load,
-            op_args=['product_categories'],
-        )
-        product_checkins = PythonOperator(
-            task_id="product_checkins",
-            python_callable=stg_load,
-            op_args=['product_checkins'],
-        )
-        product_filter_index = PythonOperator(
-            task_id="product_filter_index",
-            python_callable=stg_load,
-            op_args=['product_filter_index'],
-        )
-        product_office_qty = PythonOperator(
-            task_id="product_office_qty",
-            python_callable=stg_load,
-            op_args=['product_office_qty'],
-        )
-        product_transactions = PythonOperator(
-            task_id="product_transactions",
-            python_callable=stg_load,
-            op_args=['product_transactions'],
-        )
-        product_vendors = PythonOperator(
-            task_id="product_vendors",
-            python_callable=stg_load,
-            op_args=['product_vendors'],
-        )
-        products = PythonOperator(
-            task_id="products",
-            python_callable=stg_load,
-            op_args=['products'],
-        )
-        register_log = PythonOperator(
-            task_id="register_log",
-            python_callable=stg_load,
-            op_args=['register_log'],
-        )
-        register = PythonOperator(
-            task_id="register",
-            python_callable=stg_load,
-            op_args=['register'],
-        )
-        service_history = PythonOperator(
-            task_id="service_history",
-            python_callable=stg_load,
-            op_args=['service_history'],
-        )
-        sf_guard_group = PythonOperator(
-            task_id="sf_guard_group",
-            python_callable=stg_load,
-            op_args=['sf_guard_group'],
-        )
-        sf_guard_user_group = PythonOperator(
-            task_id="sf_guard_user_group",
-            python_callable=stg_load,
-            op_args=['sf_guard_user_group'],
-        )
-        sf_guard_user = PythonOperator(
-            task_id="sf_guard_user",
-            python_callable=stg_load,
-            op_args=['sf_guard_user'],
-        )
-        tax_payment = PythonOperator(
-            task_id="tax_payment",
-            python_callable=stg_load,
-            op_args=['tax_payment'],
-        )
-        user_activity_record = PythonOperator(
-            task_id="user_activity_record",
-            python_callable=stg_load,
-            op_args=['user_activity_record'],
-        )
-        # warehouse_order_items = PythonOperator(
-        #     task_id="warehouse_order_items",
-        #     python_callable=stg_load,
-        #     op_args=['warehouse_order_items'],
-        # )
-        upsert_warehouse_order_items(schema='mock', table='warehouse_order_items', date_column='updated_at')
-        warehouse_order_logs = PythonOperator(
-            task_id="warehouse_order_logs",
-            python_callable=stg_load,
-            op_args=['warehouse_order_logs'],
-        )
-        warehouse_orders = PythonOperator(
-            task_id="warehouse_orders",
-            python_callable=stg_load,
-            op_args=['warehouse_orders'],
-        )
+
+    with TaskGroup('upsert_tables') as upsert_tables_group:
+        for task_params in get_tasks():
+            task_id = task_params['task_id']
+            op_args = task_params['op_args']
+            task = PythonOperator(
+                task_id=task_id,
+                python_callable=stg_load,
+                op_args=op_args,
+                provide_context=True
+            )
+        warehouse_order_items(schema='mock', table='warehouse_order_items', date_column='updated_at')
         
 
     # dbt_run = DbtRunOperator(
@@ -375,5 +270,5 @@ with DAG(
     # )
     # success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
-# start_alert >> get_customers_task >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
-get_customers_task >> upsert_tables_group
+# start_alert >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
+upsert_tables_group

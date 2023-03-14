@@ -1,88 +1,57 @@
 database: dev
-schema: public
+schema: mock
 table: product_transactions
 load_type: increment
 increment_column: date
 pk: ['id']
-source:
-  schema: public
-  table: product_transactions
-target:
-  schema: mock
-  table: product_transactions
 map:
   -
     source: id
-    target: id
   -
     source: product_id
-    target: product_id
   -
     source: office_id
-    target: office_id
   -
     source: doctor_id
-    target: doctor_id
   -
     source: patient_id
-    target: patient_id
   -
     source: user_id
-    target: user_id
   -
     source: type
-    target: type
   -
     source: qty
-    target: qty
   -
     source: price
-    target: price
   -
     source: price_per
-    target: price_per
   -
     source: total_price
-    target: total_price
   -
     source: date
-    target: date
   -
     source: note
-    target: note
   -
     source: transfer_direction
-    target: transfer_direction
   -
     source: qty_free
-    target: qty_free
   -
     source: product_checkin_id
-    target: product_checkin_id
   -
     source: product_name
-    target: product_name
   -
     source: office_to_id
-    target: office_to_id
   -
     source: product_to_id
-    target: product_to_id
   -
     source: product_to_name
-    target: product_to_name
   -
     source: cost
-    target: cost
   -
     source: order_id
-    target: order_id
   -
     source: base_weight
-    target: base_weight
   -
     source: product_checkin_to_id
-    target: product_checkin_to_id
   -
     source: office_name
-    target: office_name

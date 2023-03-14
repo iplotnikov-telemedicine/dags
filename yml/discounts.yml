@@ -1,124 +1,81 @@
 database: dev
-schema: public
+schema: mock
 table: discounts
 load_type: increment_with_delete
 increment_column: updated_at
 pk: ['id']
-source:
-  schema: public
-  table: discounts
-target:
-  schema: mock
-  table: discounts
 map:
   -
     source: id
-    target: id
   -
     source: "name"
-    target: "name"
   -
     source: "type"
-    target: "type"
   -
     source: value
-    target: value
   -
     source: sync_created_at
-    target: sync_created_at
   -
     source: sync_updated_at
-    target: sync_updated_at
   -
     source: deleted_at
-    target: deleted_at
   -
     source: use_type
-    target: use_type
   -
     source: apply_type
-    target: apply_type
   -
     source: is_pos
-    target: is_pos
   -
     source: is_potify
-    target: is_potify
   -
     source: promo_code
-    target: promo_code
   -
     source: status
-    target: status
   -
     source: is_individual_use_only
-    target: is_individual_use_only
   -
     source: is_exclude_items_on_special
-    target: is_exclude_items_on_special
   -
     source: start_date
-    target: start_date
   -
     source: end_date
-    target: end_date
   -
     source: is_ongoing
-    target: is_ongoing
   -
     source: happy_weekdays
-    target: happy_weekdays
   -
     source: min_subtotal_price
-    target: min_subtotal_price
   -
     source: uses_count
-    target: uses_count
   -
     source: is_once_per_patient
-    target: is_once_per_patient
   -
     source: bogo_buy
-    target: bogo_buy
   -
     source: bogo_get
-    target: bogo_get
   -
     source: bogo_multiple
-    target: bogo_multiple
   -
     source: is_first_time_patient
-    target: is_first_time_patient
   -
     source: is_show_promo_code_on_potify
-    target: is_show_promo_code_on_potify
   -
     source: max_subtotal_price
-    target: max_subtotal_price
   -
     source: display_name
-    target: display_name
   -
     source: is_show_name_on_collection_tile
-    target: is_show_name_on_collection_tile
   -
     source: image
-    target: image
   -
     source: tv_image
-    target: tv_image
   -
     source: product_filter_id
-    target: product_filter_id
   -
     source: created_at
-    target: created_at
   -
     source: updated_at
-    target: updated_at
   -
     source: hide_banner
-    target: hide_banner
   -
     source: display_priority
-    target: display_priority

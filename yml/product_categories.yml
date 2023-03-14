@@ -1,64 +1,41 @@
 database: dev
-schema: public
+schema: mock
 table: product_categories
 load_type: full
 increment_column: 
 pk: ['id']
-source:
-  schema: public
-  table: product_categories
-target:
-  schema: mock
-  table: product_categories
 map:
   -
     source: id
-    target: id
   -
     source: "name"
-    target: "name"
   -
     source: description
-    target: description
   -
     source: photo
-    target: photo
   -
     source: lft
-    target: lft
   -
     source: rgt
-    target: rgt
   -
     source: "level"
-    target: "level"
   -
     source: created_at
-    target: created_at
   -
     source: updated_at
-    target: updated_at
   -
     source: is_system
-    target: is_system
   -
     source: sync_updated_at
-    target: sync_updated_at
   -
     source: sync_created_at
-    target: sync_created_at
   -
     source: icon_name
-    target: icon_name
   -
     source: activation_time
-    target: activation_time
   -
     source: label_template_internal_id
-    target: label_template_internal_id
   -
     source: icon_color
-    target: icon_color
   -
     source: system_id
-    target: system_id

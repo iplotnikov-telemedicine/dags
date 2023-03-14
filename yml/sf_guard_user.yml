@@ -1,160 +1,105 @@
 database: dev
-schema: public
+schema: mock
 table: sf_guard_user
 load_type: increment_with_delete
 increment_column: updated_at
 pk: ['id']
-source:
-  schema: public
-  table: sf_guard_user
-target:
-  schema: mock
-  table: sf_guard_user
 map:
   -
     source: id
-    target: id
   -
     source: staff_category_id
-    target: staff_category_id
   -
     source: first_name
-    target: first_name
   -
     source: last_name
-    target: last_name
   -
     source: last_office
-    target: last_office
   -
     source: email_address
-    target: email_address
   -
     source: username
-    target: username
   -
     source: photo
-    target: photo
   -
     source: dmv
-    target: dmv
   -
     source: address
-    target: address
   -
     source: mobile_phone
-    target: mobile_phone
   -
     source: phone
-    target: phone
   -
     source: algorithm
-    target: algorithm
   -
     source: "type"
-    target: "type"
   -
     source: is_admin
-    target: is_admin
   -
     source: access_type
-    target: access_type
   -
     source: office_access
-    target: office_access
   -
     source: is_active
-    target: is_active
   -
     source: is_super_admin
-    target: is_super_admin
   -
     source: last_login
-    target: last_login
   -
     source: timetracker_autocheckout_time
-    target: timetracker_autocheckout_time
   -
     source: timetracker_hour_rate
-    target: timetracker_hour_rate
   -
     source: created_at
-    target: created_at
   -
     source: updated_at
-    target: updated_at
   -
     source: patient_id
-    target: patient_id
   -
     source: is_verified
-    target: is_verified
   -
     source: is_dmv_verified
-    target: is_dmv_verified
   -
     source: whmcs_clientid
-    target: whmcs_clientid
   -
     source: whmcs_email
-    target: whmcs_email
   -
     source: whmcs_password
-    target: whmcs_password
   -
     source: user_pin
-    target: user_pin
   -
     source: manager_pin
-    target: manager_pin
   -
     source: autologin_hash
-    target: autologin_hash
   -
     source: trial_title
-    target: trial_title
   -
     source: trial_indica_description
-    target: trial_indica_description
   -
     source: trial_medibook_description
-    target: trial_medibook_description
   -
     source: trial_photo_url
-    target: trial_photo_url
   -
     source: is_trial_support
-    target: is_trial_support
   -
     source: sync_created_at
-    target: sync_created_at
   -
     source: sync_updated_at
-    target: sync_updated_at
   -
     source: wcii_hash
-    target: wcii_hash
   -
     source: agilecrm_contact_id
-    target: agilecrm_contact_id
   -
     source: deleted_at
-    target: deleted_at
   -
     source: storage_access
-    target: storage_access
   -
     source: staff_id
-    target: staff_id
   -
     source: driver_license_number
-    target: driver_license_number
   -
     source: occupational_driver_license
-    target: occupational_driver_license
   -
     source: external_id
-    target: external_id
   -
     source: potify_driver_id
-    target: potify_driver_id

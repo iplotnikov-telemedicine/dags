@@ -1,364 +1,240 @@
 database: dev
-schema: public
+schema: mock
 table: patients
 load_type: increment_with_delete
 increment_column: updated_at
 pk: ['pat_id']
-source:
-  schema: public
-  table: patients
-target:
-  schema: mock
-  table: patients
 map:
   -
     source: pat_id
-    target: pat_id
   -
     source: pat_user_id
-    target: pat_user_id
   -
     source: pat_user_info
-    target: pat_user_info
   -
     source: pat_office_id
-    target: pat_office_id
   -
     source: pat_first_name
-    target: pat_first_name
   -
     source: pat_middle_name
-    target: pat_middle_name
   -
     source: pat_last_name
-    target: pat_last_name
   -
     source: pat_gender
-    target: pat_gender
   -
     source: pat_photo
-    target: pat_photo
   -
     source: pat_dob
-    target: pat_dob
   -
     source: pat_phone
-    target: pat_phone
   -
     source: pat_alt_phone
-    target: pat_alt_phone
   -
     source: pat_email
-    target: pat_email
   -
     source: pat_state_name
-    target: pat_state_name
   -
     source: pat_city_name
-    target: pat_city_name
   -
     source: pat_zip_name
-    target: pat_zip_name
   -
     source: pat_address1
-    target: pat_address1
   -
     source: pat_address2
-    target: pat_address2
   -
     source: pat_dmv
-    target: pat_dmv
   -
     source: pat_dhc
-    target: pat_dhc
   -
     source: pat_passport
-    target: pat_passport
   -
     source: pat_notes
-    target: pat_notes
   -
     source: pat_ref_points
-    target: pat_ref_points
   -
     source: pat_is_hidden
-    target: pat_is_hidden
   -
     source: pat_is_disabled
-    target: pat_is_disabled
   -
     source: pat_is_veteran
-    target: pat_is_veteran
   -
     source: pat_is_military
-    target: pat_is_military
   -
     source: pat_is_seniou
-    target: pat_is_seniou
   -
     source: pat_is_nonpatient
-    target: pat_is_nonpatient
   -
     source: pat_is_facebooked
-    target: pat_is_facebooked
   -
     source: pat_is_needs_cultivation
-    target: pat_is_needs_cultivation
   -
     source: pat_is_cancer
-    target: pat_is_cancer
   -
     source: pat_status
-    target: pat_status
   -
     source: pat_weight
-    target: pat_weight
   -
     source: pat_height
-    target: pat_height
   -
     source: pat_amount
-    target: pat_amount
   -
     source: pat_created_at_date
-    target: pat_created_at_date
   -
     source: pat_is_deleted
-    target: pat_is_deleted
   -
     source: pat_deleted_at
-    target: pat_deleted_at
   -
     source: pat_deleted_by_doc_id
-    target: pat_deleted_by_doc_id
   -
     source: pat_stamp
-    target: pat_stamp
   -
     source: pat_is_appointment
-    target: pat_is_appointment
   -
     source: pat_last_visit_date
-    target: pat_last_visit_date
   -
     source: is_crypted
-    target: is_crypted
   -
     source: pat_skype
-    target: pat_skype
   -
     source: pat_insurance
-    target: pat_insurance
   -
     source: pat_general_intake
-    target: pat_general_intake
   -
     source: pat_has_intake_for_approving
-    target: pat_has_intake_for_approving
   -
     source: cast(is_not_send_mail as BOOLEAN) as is_not_send_mail
-    target: cast(is_not_send_mail as BOOLEAN) as is_not_send_mail
   -
     source: cast(is_not_send_email as BOOLEAN) as is_not_send_email
-    target: cast(is_not_send_email as BOOLEAN) as is_not_send_email
   -
     source: cast(is_not_send_sms as BOOLEAN) as is_not_send_sms
-    target: cast(is_not_send_sms as BOOLEAN) as is_not_send_sms
   -
     source: cast(is_not_call as BOOLEAN) as is_not_call
-    target: cast(is_not_call as BOOLEAN) as is_not_call
   -
     source: unsubscribe_hash
-    target: unsubscribe_hash
   -
     source: is_from_shop
-    target: is_from_shop
   -
     source: pat_ssn
-    target: pat_ssn
   -
     source: pat_ethnicity
-    target: pat_ethnicity
   -
     source: pat_race
-    target: pat_race
   -
     source: pat_address_lon
-    target: pat_address_lon
   -
     source: pat_address_lat
-    target: pat_address_lat
   -
     source: pat_m_phone1
-    target: pat_m_phone1
   -
     source: pat_m_phone2
-    target: pat_m_phone2
   -
     source: pat_m_phone3
-    target: pat_m_phone3
   -
     source: pat_h_phone1
-    target: pat_h_phone1
   -
     source: pat_h_phone2
-    target: pat_h_phone2
   -
     source: pat_h_phone3
-    target: pat_h_phone3
   -
     source: pat_o_phone1
-    target: pat_o_phone1
   -
     source: pat_o_phone2
-    target: pat_o_phone2
   -
     source: pat_o_phone3
-    target: pat_o_phone3
   -
     source: pat_fax
-    target: pat_fax
-  -
     source: pat_lng
-    target: pat_lng
   -
     source: current_rec_valid_to
-    target: current_rec_valid_to
   -
     source: current_rec_doc_id
-    target: current_rec_doc_id
   -
     source: current_rec_number
-    target: current_rec_number
   -
     source: sync_updated_at
-    target: sync_updated_at
   -
     source: sync_created_at
-    target: sync_created_at
   -
     source: pat_is_ssi
-    target: pat_is_ssi
   -
     source: pat_is_compassion
-    target: pat_is_compassion
   -
     source: pat_is_vip
-    target: pat_is_vip
   -
     source: pat_is_staff
-    target: pat_is_staff
   -
     source: pat_is_former_staff
-    target: pat_is_former_staff
   -
     source: pat_is_markedasdeleted
-    target: pat_is_markedasdeleted
   -
     source: pat_markedasdeleted_reason
-    target: pat_markedasdeleted_reason
   -
     source: pat_markedasdeleted_username
-    target: pat_markedasdeleted_username
   -
     source: pat_markedasdeleted_date
-    target: pat_markedasdeleted_date
   -
     source: balance
-    target: balance
   -
     source: pat_county_name
-    target: pat_county_name
   -
     source: pat_location_id
-    target: pat_location_id
   -
     source: pat_state_id
-    target: pat_state_id
   -
     source: pat_county_id
-    target: pat_county_id
   -
     source: pat_city_id
-    target: pat_city_id
   -
     source: pat_zip_id
-    target: pat_zip_id
   -
     source: is_typist_work
-    target: is_typist_work
   -
     source: pat_dmv_alt
-    target: pat_dmv_alt
   -
     source: pat_is_blacklist
-    target: pat_is_blacklist
   -
     source: pat_blacklist_reason
-    target: pat_blacklist_reason
   -
     source: "type"
-    target: "type"
   -
     source: pat_phone_twilio_lookup
-    target: pat_phone_twilio_lookup
   -
     source: pat_alt_phone_twilio_lookup
-    target: pat_alt_phone_twilio_lookup
   -
     source: is_twilio_lookup
-    target: is_twilio_lookup
   -
     source: agile_crm_id
-    target: agile_crm_id
   -
     source: potify_id
-    target: potify_id
   -
     source: potify_earned_cashback
-    target: potify_earned_cashback
   -
     source: potify_spent_cashback
-    target: potify_spent_cashback
   -
     source: created_at
-    target: created_at
   -
     source: updated_at
-    target: updated_at
   -
     source: is_tax_exempt
-    target: is_tax_exempt
   -
     source: tax_profile_id
-    target: tax_profile_id
   -
     source: phone_is_consented
-    target: phone_is_consented
   -
     source: email_is_consented
-    target: email_is_consented
   -
     source: phone_consent_given_at
-    target: phone_consent_given_at
   -
     source: phone_consent_signature
-    target: phone_consent_signature
   -
     source: email_consent_given_at
-    target: email_consent_given_at
   -
     source: email_consent_signature
-    target: email_consent_signature
   -
     source: deleted_at
-    target: deleted_at
   -
     source: tax_tier_id
-    target: tax_tier_id
   -
     source: buyer_status
-    target: buyer_status
   -
     source: marketplace
-    target: marketplace
