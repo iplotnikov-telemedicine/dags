@@ -1,3 +1,5 @@
+### This is an extended version. Currently not used in DAGs
+
 database: dev
 schema: public
 table: sf_guard_user_group
