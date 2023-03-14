@@ -8,12 +8,13 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
 from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator, DbtSnapshotOperator
 import logging
+import json
 from airflow.decorators import task, task_group
 from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
 from airflow.models import Variable
-from python.to_stage import stg_load
+from python.to_stage import stg_load, get_customers
 from airflow.utils.task_group import TaskGroup
 
 
@@ -101,10 +102,12 @@ cursor = redshift_conn.cursor()
 @task
 def warehouse_order_items(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
+
+    # customers = ti.xcom_pull(key='customers', task_ids='get_customers')
+    # # get max_comp_id from target table and filter list of customers
+    # max_comp_id = int(Variable.get(task_id, 0))
+    # customers = [c for c in customers if c[0] > max_comp_id]
+
     # check if table not exists
     query = f'''
         select 1
@@ -115,9 +118,9 @@ def warehouse_order_items(schema, table, date_column, **kwargs):
     table_exists = cursor.fetchone()
     logging.info(f'Table exists value: {table_exists}')
     if table_exists is None:
-        # create blank table
-        comp_id = customers[0][0]
-        ext_schema = customers[0][1]
+        # creating blank table from schema 'ext_indica_c9928_company' because of this company has not blank tables
+        comp_id = 9928 #customers[0][0]
+        ext_schema = 'ext_indica_c9928_company' #customers[0][1]
         query = f'''
             create table {schema}.{table} as
             select {comp_id} as comp_id, id, order_id, product_id, "name", descr, price_type, price_per, 
@@ -134,7 +137,15 @@ def warehouse_order_items(schema, table, date_column, **kwargs):
         cursor.execute(query)
         redshift_conn.commit()
         logging.info(f'Table {schema}.{table} created successfully')
-    for comp_id, ext_schema in customers:
+
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -185,8 +196,12 @@ def warehouse_order_items(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+    #     Variable.set(task_id, comp_id)
+    # Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 
