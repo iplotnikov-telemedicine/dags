@@ -33,7 +33,7 @@ cursor = redshift_conn.cursor()
 #         :rocket: Start
 #         *Dag*: {context.get('task_instance').dag_id}
 #         *Run ID*: {context.get('task_instance').run_id}
-#         *Execution Time*: {context.get('execution_date')}
+#         *Execution Time*: {context.get('ts')}
 #         *Log Url*: {context.get('task_instance').log_url}
 #     """
 #     alert = SlackWebhookOperator(
@@ -51,7 +51,7 @@ cursor = redshift_conn.cursor()
 #         :red_circle: Failure
 #         *Task*: {context.get('task_instance').task_id}
 #         *Dag*: {context.get('task_instance').dag_id}
-#         *Execution Time*: {context.get('execution_date')}
+#         *Execution Time*: {context.get('ts')}
 #         *Log Url*: {context.get('task_instance').log_url}
 #     """
 #     alert = SlackWebhookOperator(
@@ -69,7 +69,7 @@ cursor = redshift_conn.cursor()
 #         :large_yellow_circle: Retry
 #         *Task*: {context.get('task_instance').task_id}
 #         *Dag*: {context.get('task_instance').dag_id}
-#         *Execution Time*: {context.get('execution_date')}
+#         *Execution Time*: {context.get('ts')}
 #         *Log Url*: {context.get('task_instance').log_url}
 #     """
 #     alert = SlackWebhookOperator(
@@ -87,7 +87,7 @@ cursor = redshift_conn.cursor()
 #         :large_green_circle: Success
 #         *Dag*: {context.get('task_instance').dag_id}
 #         *Run ID*: {context.get('task_instance').run_id}
-#         *Execution Time*: {context.get('execution_date')}
+#         *Execution Time*: {context.get('ts')}
 #         *Log Url*: {context.get('task_instance').log_url}
 #     """
 #     alert = SlackWebhookOperator(
