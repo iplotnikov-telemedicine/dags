@@ -18,29 +18,37 @@ cursor = redshift_conn.cursor()
 
 
 # getting customers list for loading
-def get_customers(table, comp_id_list):
-    if comp_id_list:
+def get_customers(table, comp_id_list, is_full_load=False):
+    if is_full_load:
+        condition = f'''
+            comp_db_name in (
+            select table_schema
+            from ext_indica_info.tables
+            where table_schema like '%_company' 
+                and table_name = '{table}')
+        '''
+    elif comp_id_list:
         condition = f'''comp_id IN ({', '.join(list(map(str, comp_id_list)))})
         '''
     else:
-        condition = '''update_time >= CURRENT_DATE - INTERVAL '16 HOUR'
+        condition = f'''
+            comp_db_name in (
+            select table_schema
+            from ext_indica_info.tables
+            where table_schema like '%_company' 
+                and table_name = '{table}'
+                and update_time >= CURRENT_DATE - INTERVAL '16 HOUR')
         '''
     query = f'''
         SELECT int_customers.comp_id, TRIM(svv_external_schemas.schemaname) as schemaname
         FROM test.int_customers
         INNER JOIN svv_external_schemas
         ON int_customers.comp_db_name = svv_external_schemas.databasename
-        WHERE int_customers.comp_db_name in (
-            select table_schema
-            from ext_indica_info.tables
-            where table_schema like '%_company' 
-                and table_name = '{table}'
-                ) and {condition}
+        WHERE {condition}
         ORDER BY comp_id
     '''
     logging.info(query)
     cursor.execute(query)
-    
     customers_dict = {row[0]:row[1] for row in cursor.fetchall()}
     logging.info(f'customers_dict: {customers_dict}')
     logging.info(f'The number of companies is being processed: {len(customers_dict)}')
@@ -95,7 +103,12 @@ def stg_load(*op_args, **kwargs):
     customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
     if not customers_dict:
         comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
-        customers_dict = get_customers(table, comp_id_list)
+        # if the table does not exist before then initiate full load
+        if table_exists is None:
+            logging.info(f'Table {target_schema}.{table} does not exist before, initiate full load')
+            customers_dict = get_customers(table, comp_id_list, is_full_load=True)
+        else:
+            customers_dict = get_customers(table, comp_id_list)
         Variable.set(task_id, json.dumps(customers_dict))
     logging.info(f'Start loading with type: {load_type}')
     for comp_id in list(customers_dict.keys()):
