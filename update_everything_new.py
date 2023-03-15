@@ -112,7 +112,7 @@ def get_customers(table, comp_id_list):
             from ext_indica_info.tables
             where table_schema like '%_company' 
                 and table_name = '{table}'
-                and {condition})
+                ) and {condition}
         ORDER BY comp_id
     '''
     cursor.execute(query)

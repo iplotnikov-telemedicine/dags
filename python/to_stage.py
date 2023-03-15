@@ -35,11 +35,12 @@ def get_customers(table, comp_id_list):
             from ext_indica_info.tables
             where table_schema like '%_company' 
                 and table_name = '{table}'
-                and {condition})
+                ) and {condition}
         ORDER BY comp_id
     '''
-    cursor.execute(query)
     logging.info(query)
+    cursor.execute(query)
+    
     customers_dict = {row[0]:row[1] for row in cursor.fetchall()}
     logging.info(f'customers_dict: {customers_dict}')
     logging.info(f'The number of companies is being processed: {len(customers_dict)}')
