@@ -10,6 +10,8 @@ from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
 from airflow.hooks.base import BaseHook
 from airflow.operators.empty import EmptyOperator
 from airflow.models import Variable
+from airflow.providers.mysql.hooks.mysql import MySqlHook
+import json
 
 
 # Get connection to Redshift DB
@@ -93,37 +95,66 @@ def success_slack_alert(context):
     return alert.execute(context=context)
 
 
-@task
-def get_customers(ti=None, **kwargs):
-    comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+def get_customers(table, comp_id_list):
     if comp_id_list:
-        condition = f"int_customers.comp_id IN ({', '.join(list(map(str, comp_id_list)))})"
+        condition = f'''comp_id IN ({', '.join(list(map(str, comp_id_list)))})
+        '''
     else:
-        condition = "int_customers.potify_sync_entity_updated_at >= current_date - interval '3 day'"
-    cursor = redshift_conn.cursor()
+        condition = '''update_time >= CURRENT_DATE - INTERVAL '16 HOUR'
+        '''
     query = f'''
         SELECT int_customers.comp_id, TRIM(svv_external_schemas.schemaname) as schemaname
         FROM test.int_customers
         INNER JOIN svv_external_schemas
         ON int_customers.comp_db_name = svv_external_schemas.databasename
-        WHERE {condition}
+        WHERE int_customers.comp_db_name in (
+            select table_schema
+            from ext_indica_info.tables
+            where table_schema like '%_company' 
+                and table_name = '{table}'
+                and {condition})
         ORDER BY comp_id
     '''
     cursor.execute(query)
     logging.info(query)
-    data = cursor.fetchall()
-    logging.info(f'The number of companies is being processing: {len(data)}')
-    ti.xcom_push(key='customers', value=data)
+    customers_dict = {row[0]:row[1] for row in cursor.fetchall()}
+    logging.info(f'customers_dict: {customers_dict}')
+    logging.info(f'The number of companies is being processed: {len(customers_dict)}')
+    return customers_dict
+
+
+# @task
+# def get_customers(ti=None, **kwargs):
+#     comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+#     if comp_id_list:
+#         condition = f"int_customers.comp_id IN ({', '.join(list(map(str, comp_id_list)))})"
+#     else:
+#         condition = "int_customers.potify_sync_entity_updated_at >= current_date - interval '3 day'"
+#     query = f'''
+#         SELECT int_customers.comp_id, TRIM(svv_external_schemas.schemaname) as schemaname
+#         FROM test.int_customers
+#         INNER JOIN svv_external_schemas
+#         ON int_customers.comp_db_name = svv_external_schemas.databasename
+#         WHERE {condition}
+#         ORDER BY comp_id
+#     '''
+#     cursor.execute(query)
+#     logging.info(query)
+#     data = cursor.fetchall()
+#     logging.info(f'The number of companies is being processed: {len(data)}')
+#     ti.xcom_push(key='customers', value=data)
 
 
 @task
 def upsert_brands(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         cursor.execute('BEGIN')
         # creating temp table with new data increment
@@ -166,18 +197,22 @@ def upsert_brands(schema, table, date_column, **kwargs):
         redshift_conn.commit()
         cursor.execute('END')
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_company_config(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # deleting old data from target
         query = f'''
@@ -197,19 +232,23 @@ def upsert_company_config(schema, table, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 
 @task
 def upsert_discounts(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -256,18 +295,22 @@ def upsert_discounts(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_patient_group_ref(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -308,18 +351,22 @@ def upsert_patient_group_ref(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_patient_group(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -360,18 +407,22 @@ def upsert_patient_group(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_patients(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -431,18 +482,22 @@ def upsert_patients(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_product_categories(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # deleting old data from target
         query = f'''
@@ -465,18 +520,22 @@ def upsert_product_categories(schema, table, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_product_filter_index(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # deleting old data from target
         query = f'''
@@ -496,18 +555,48 @@ def upsert_product_filter_index(schema, table, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_product_transactions(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    # check if table not exists
+    query = f'''
+        select 1
+        from information_schema.tables
+        where table_schema = '{schema}' and table_name = '{table}'
+        '''
+    cursor.execute(query)
+    table_exists = cursor.fetchone()
+    logging.info(f'Table exists value: {table_exists}')
+    if table_exists is None:
+        # create blank table
+        comp_id = list(customers_dict.items())[0][0]
+        ext_schema = list(customers_dict.items())[0][1]
+        query = f'''
+            create table {schema}.{table} as
+            select {comp_id} as comp_id, id, product_id, office_id, doctor_id, patient_id, user_id, type, 
+                qty, price, price_per, total_price, date, note, item_type, 
+                transfer_direction, CAST(qty_free as float4) as qty_free, product_checkin_id, product_name, 
+                office_to_id, product_to_id, product_to_name, cost, order_id, 
+                base_weight, product_checkin_to_id, office_name, current_timestamp as inserted_at
+            from {ext_schema}.{table}
+            where 1 != 1
+            '''
+        cursor.execute(query)
+        redshift_conn.commit()
+        logging.info(f'Table {schema}.{table} created successfully')
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # inserting new data with increment to target
         query = f'''
@@ -515,7 +604,7 @@ def upsert_product_transactions(schema, table, date_column, **kwargs):
             SELECT
                 {comp_id} as comp_id, id, product_id, office_id, doctor_id, patient_id, user_id, type, 
                 qty, price, price_per, total_price, date, note, item_type, 
-                transfer_direction, qty_free, product_checkin_id, product_name, 
+                transfer_direction, CAST(qty_free as float4) as qty_free, product_checkin_id, product_name, 
                 office_to_id, product_to_id, product_to_name, cost, order_id, 
                 base_weight, product_checkin_to_id, office_name, current_timestamp as inserted_at
             FROM {ext_schema}.{table}
@@ -530,18 +619,22 @@ def upsert_product_transactions(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_product_vendors(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -584,18 +677,22 @@ def upsert_product_vendors(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_products(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -657,18 +754,22 @@ def upsert_products(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_register_log(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # inserting new data with increment to target
         query = f'''
@@ -690,18 +791,22 @@ def upsert_register_log(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_register(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -750,19 +855,23 @@ def upsert_register(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 
 @task
 def upsert_sf_guard_user(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -809,18 +918,22 @@ def upsert_sf_guard_user(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_tax_payment(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -866,18 +979,22 @@ def upsert_tax_payment(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_warehouse_orders(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -933,18 +1050,22 @@ def upsert_warehouse_orders(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -995,18 +1116,22 @@ def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_service_history(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -1053,18 +1178,22 @@ def upsert_service_history(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_product_checkins(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -1111,18 +1240,22 @@ def upsert_product_checkins(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_product_office_qty(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # deleting old data from target
         query = f'''
@@ -1143,18 +1276,20 @@ def upsert_product_office_qty(schema, table, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    # check if table not exists
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
     query = f'''
         select 1
         from information_schema.tables
@@ -1165,18 +1300,20 @@ def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
     logging.info(f'Table exists value: {table_exists}')
     if table_exists is None:
         # create blank table
-        comp_id = customers[0][0]
-        ext_schema = customers[0][1]
+        comp_id = list(customers_dict.items())[0][0]
+        ext_schema = list(customers_dict.items())[0][1]
         query = f'''
             create table {schema}.{table} as
-            select {comp_id} as comp_id, id, order_id, "type", sf_guard_user_id, sf_guard_user_name, order_courier_register_id, created_at, register_id, application, current_timestamp as inserted_at
+            select {comp_id} as comp_id, id, order_id, "type", sf_guard_user_id, sf_guard_user_name, 
+                order_courier_register_id, created_at, register_id, application, current_timestamp as inserted_at
             from {ext_schema}.{table}
             where 1 != 1
             '''
         cursor.execute(query)
         redshift_conn.commit()
         logging.info(f'Table {schema}.{table} created successfully')
-    for comp_id, ext_schema in customers:
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # inserting new data with increment to target
         query = f'''
@@ -1195,17 +1332,20 @@ def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_user_activity_record(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
     # check if table not exists
     query = f'''
         select 1
@@ -1217,8 +1357,8 @@ def upsert_user_activity_record(schema, table, date_column, **kwargs):
     logging.info(f'Table exists value: {table_exists}')
     if table_exists is None:
         # create blank table
-        comp_id = customers[0][0]
-        ext_schema = customers[0][1]
+        comp_id = list(customers_dict.items())[0][0]
+        ext_schema = list(customers_dict.items())[0][1]
         query = f'''
             create table {schema}.{table} as
             select {comp_id} as comp_id, id, sf_guard_user_id, "type", description, ip, created_at, updated_at, current_timestamp as inserted_at
@@ -1228,7 +1368,8 @@ def upsert_user_activity_record(schema, table, date_column, **kwargs):
         cursor.execute(query)
         redshift_conn.commit()
         logging.info(f'Table {schema}.{table} created successfully')
-    for comp_id, ext_schema in customers:
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -1269,17 +1410,20 @@ def upsert_user_activity_record(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_sf_guard_user_group(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
     # check if table not exists
     query = f'''
         select 1
@@ -1291,8 +1435,8 @@ def upsert_sf_guard_user_group(schema, table, date_column, **kwargs):
     logging.info(f'Table exists value: {table_exists}')
     if table_exists is None:
         # create blank table
-        comp_id = customers[0][0]
-        ext_schema = customers[0][1]
+        comp_id = list(customers_dict.items())[0][0]
+        ext_schema = list(customers_dict.items())[0][1]
         query = f'''
             create table {schema}.{table} as
             select {comp_id} as comp_id, user_id, group_id, created_at, updated_at, current_timestamp as inserted_at
@@ -1302,7 +1446,8 @@ def upsert_sf_guard_user_group(schema, table, date_column, **kwargs):
         cursor.execute(query)
         redshift_conn.commit()
         logging.info(f'Table {schema}.{table} created successfully')
-    for comp_id, ext_schema in customers:
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -1344,17 +1489,20 @@ def upsert_sf_guard_user_group(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task
 def upsert_sf_guard_group(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
+    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+    if not customers_dict:
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        customers_dict = get_customers(table, comp_id_list)
+        Variable.set(task_id, json.dumps(customers_dict))
     # check if table not exists
     query = f'''
         select 1
@@ -1366,8 +1514,8 @@ def upsert_sf_guard_group(schema, table, date_column, **kwargs):
     logging.info(f'Table exists value: {table_exists}')
     if table_exists is None:
         # create blank table
-        comp_id = customers[0][0]
-        ext_schema = customers[0][1]
+        comp_id = list(customers_dict.items())[0][0]
+        ext_schema = list(customers_dict.items())[0][1]
         query = f'''
             create table {schema}.{table} as
             select {comp_id} as comp_id, id, "name", description, is_main, created_at, updated_at, current_timestamp as inserted_at
@@ -1377,7 +1525,8 @@ def upsert_sf_guard_group(schema, table, date_column, **kwargs):
         cursor.execute(query)
         redshift_conn.commit()
         logging.info(f'Table {schema}.{table} created successfully')
-    for comp_id, ext_schema in customers:
+    for comp_id in list(customers_dict.keys()):
+        ext_schema = customers_dict[comp_id]
         logging.info(f'Task is starting for company {comp_id}')
         # creating temp table with new data increment
         query = f'''
@@ -1418,8 +1567,10 @@ def upsert_sf_guard_group(schema, table, date_column, **kwargs):
         # commit to target DB
         redshift_conn.commit()
         logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+        del customers_dict[comp_id]
+        logging.info(f'Number of companies left: {len(customers_dict)}')
+        Variable.set(task_id, json.dumps(customers_dict))
+    Variable.delete(task_id)
 
 
 @task_group
@@ -1469,12 +1620,13 @@ with DAG(
     catchup=False,
 ) as dag:
     start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
-    get_customers_task = get_customers()
+    # get_customers_task = get_customers()
     upsert_tables_group = upsert_tables()
     dbt_run = DbtRunOperator(
         task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
+        exclude=["config.materialized:view"]
     )
     dbt_snapshot = DbtSnapshotOperator(
         task_id="dbt_snapshot",
@@ -1488,4 +1640,4 @@ with DAG(
     )
     success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
-    start_alert >> get_customers_task >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
+    start_alert >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert

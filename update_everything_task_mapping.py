@@ -113,7 +113,6 @@ def get_customers(ti=None):
 
 
 @task(max_active_tis_per_dag=1)
-# @task()
 def upsert_brands(customer_data, schema, table, date_column):
     (comp_id, ext_schema) = customer_data
     # ti, task_id = kwargs['ti'], kwargs['task'].task_id
@@ -190,96 +189,98 @@ def upsert_brands(customer_data, schema, table, date_column):
     # Variable.set(task_id, 0)
 
 
-@task
-def upsert_company_config(schema, table, **kwargs):
-    ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
+@task(max_active_tis_per_dag=1)
+def upsert_company_config(customer_data, schema, table):
+    (comp_id, ext_schema) = customer_data
+    # ti, task_id = kwargs['ti'], kwargs['task'].task_id
+    # customers = ti.xcom_pull(key='customers', task_ids='get_customers')
     # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
-        logging.info(f'Task is starting for company {comp_id}')
-        # deleting old data from target
-        query = f'''
-            DELETE FROM {schema}.{table}
-            WHERE comp_id = {comp_id}
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
-        # inserting new data to target
-        query = f'''
-            INSERT INTO {schema}.{table}
-            SELECT {comp_id}, id, "name", human_name, value
-            FROM {ext_schema}.{table}
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
-        # commit to target DB
-        redshift_conn.commit()
-        logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+    # max_comp_id = int(Variable.get(task_id, 0))
+    # customers = [c for c in customers if c[0] > max_comp_id]
+    # for comp_id, ext_schema in customers:
+    logging.info(f'Task is starting for company {comp_id}')
+    # deleting old data from target
+    query = f'''
+        DELETE FROM {schema}.{table}
+        WHERE comp_id = {comp_id}
+    '''
+    cursor.execute(query)
+    logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+    # inserting new data to target
+    query = f'''
+        INSERT INTO {schema}.{table}
+        SELECT {comp_id}, id, "name", human_name, value
+        FROM {ext_schema}.{table}
+    '''
+    cursor.execute(query)
+    logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+    # commit to target DB
+    redshift_conn.commit()
+    logging.info(f'Task is finished for company {comp_id}')
+    #     Variable.set(task_id, comp_id)
+    # Variable.set(task_id, 0)
 
 
-@task
-def upsert_discounts(schema, table, date_column, **kwargs):
-    ti, task_id = kwargs['ti'], kwargs['task'].task_id
-    customers = ti.xcom_pull(key='customers', task_ids='get_customers')
+@task(max_active_tis_per_dag=1)
+def upsert_discounts(customer_data, schema, table, date_column):
+    # ti, task_id = kwargs['ti'], kwargs['task'].task_id
+    # customers = ti.xcom_pull(key='customers', task_ids='get_customers')
     # get max_comp_id from target table and filter list of customers
-    max_comp_id = int(Variable.get(task_id, 0))
-    customers = [c for c in customers if c[0] > max_comp_id]
-    for comp_id, ext_schema in customers:
-        logging.info(f'Task is starting for company {comp_id}')
-        # creating temp table with new data increment
-        query = f'''
-            CREATE temporary TABLE {table}_{comp_id}_temp as
-            SELECT *
-            from {ext_schema}.{table}
-            where {date_column} > (
-                select coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-                from {schema}.{table}
-                where comp_id = {comp_id}
-            ) and {date_column} < CURRENT_DATE + interval '8 hours'
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is created')
-        # deleting from target table data that were updated
-        query = f'''
-            DELETE FROM {schema}.{table}
-            USING {table}_{comp_id}_temp
-            WHERE {schema}.{table}.comp_id = {comp_id}
-                AND {schema}.{table}.id = {table}_{comp_id}_temp.id
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
-        # inserting increment to target table
-        query = f'''
-            INSERT INTO {schema}.{table}
-            SELECT {comp_id}, id, "name", "type", value, sync_created_at, sync_updated_at, 
-                deleted_at, use_type, apply_type, is_pos, is_potify, promo_code, status, 
-                is_individual_use_only, is_exclude_items_on_special, start_date, end_date, 
-                is_ongoing, happy_weekdays, min_subtotal_price, uses_count, is_once_per_patient, 
-                bogo_buy, bogo_get, bogo_multiple, is_first_time_patient, is_show_promo_code_on_potify, 
-                max_subtotal_price, display_name, is_show_name_on_collection_tile, image, tv_image, 
-                product_filter_id, created_at, updated_at, hide_banner, display_priority
-            FROM {table}_{comp_id}_temp
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
-        # deleting temp table
-        query = f'''
-            DROP TABLE {table}_{comp_id}_temp
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is dropped')
-        # commit to target DB
-        redshift_conn.commit()
-        logging.info(f'Task is finished for company {comp_id}')
-        Variable.set(task_id, comp_id)
-    Variable.set(task_id, 0)
+    # max_comp_id = int(Variable.get(task_id, 0))
+    # customers = [c for c in customers if c[0] > max_comp_id]
+    (comp_id, ext_schema) = customer_data
+    # for comp_id, ext_schema in customers:
+    logging.info(f'Task is starting for company {comp_id}')
+    # creating temp table with new data increment
+    query = f'''
+        CREATE temporary TABLE {table}_{comp_id}_temp as
+        SELECT *
+        from {ext_schema}.{table}
+        where {date_column} > (
+            select coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+            from {schema}.{table}
+            where comp_id = {comp_id}
+        ) and {date_column} < CURRENT_DATE + interval '8 hours'
+    '''
+    cursor.execute(query)
+    logging.info(f'Temp table is created')
+    # deleting from target table data that were updated
+    query = f'''
+        DELETE FROM {schema}.{table}
+        USING {table}_{comp_id}_temp
+        WHERE {schema}.{table}.comp_id = {comp_id}
+            AND {schema}.{table}.id = {table}_{comp_id}_temp.id
+    '''
+    cursor.execute(query)
+    logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
+    # inserting increment to target table
+    query = f'''
+        INSERT INTO {schema}.{table}
+        SELECT {comp_id}, id, "name", "type", value, sync_created_at, sync_updated_at, 
+            deleted_at, use_type, apply_type, is_pos, is_potify, promo_code, status, 
+            is_individual_use_only, is_exclude_items_on_special, start_date, end_date, 
+            is_ongoing, happy_weekdays, min_subtotal_price, uses_count, is_once_per_patient, 
+            bogo_buy, bogo_get, bogo_multiple, is_first_time_patient, is_show_promo_code_on_potify, 
+            max_subtotal_price, display_name, is_show_name_on_collection_tile, image, tv_image, 
+            product_filter_id, created_at, updated_at, hide_banner, display_priority
+        FROM {table}_{comp_id}_temp
+    '''
+    cursor.execute(query)
+    logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
+    # deleting temp table
+    query = f'''
+        DROP TABLE {table}_{comp_id}_temp
+    '''
+    cursor.execute(query)
+    logging.info(f'Temp table is dropped')
+    # commit to target DB
+    redshift_conn.commit()
+    logging.info(f'Task is finished for company {comp_id}')
+    #     Variable.set(task_id, comp_id)
+    # Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_patient_group_ref(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -331,7 +332,7 @@ def upsert_patient_group_ref(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_patient_group(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -383,7 +384,7 @@ def upsert_patient_group(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_patients(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -454,7 +455,7 @@ def upsert_patients(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_categories(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -488,7 +489,7 @@ def upsert_product_categories(schema, table, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_filter_index(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -519,7 +520,7 @@ def upsert_product_filter_index(schema, table, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_transactions(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -553,7 +554,7 @@ def upsert_product_transactions(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_vendors(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -607,7 +608,7 @@ def upsert_product_vendors(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_products(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -680,7 +681,7 @@ def upsert_products(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_register_log(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -713,7 +714,7 @@ def upsert_register_log(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_register(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -773,7 +774,7 @@ def upsert_register(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_tax_payment(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -830,7 +831,7 @@ def upsert_tax_payment(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_warehouse_orders(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -897,7 +898,7 @@ def upsert_warehouse_orders(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -956,7 +957,7 @@ def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_service_history(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -1014,7 +1015,7 @@ def upsert_service_history(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_checkins(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -1072,7 +1073,7 @@ def upsert_product_checkins(schema, table, date_column, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_product_office_qty(schema, table, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -1104,7 +1105,7 @@ def upsert_product_office_qty(schema, table, **kwargs):
     Variable.set(task_id, 0)
 
 
-@task
+@task(max_active_tis_per_dag=1)
 def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     customers = ti.xcom_pull(key='customers', task_ids='get_customers')
@@ -1160,25 +1161,25 @@ def upsert_warehouse_order_logs(schema, table, date_column, **kwargs):
 def upsert_tables(get_customers_task, schema='mock'):
     logging.info(f' Total customers list: {get_customers_task}')
     upsert_brands.partial(schema=schema, table='brands', date_column='sync_updated_at').expand(customer_data=get_customers_task)
-    # upsert_company_config.partial(schema, table='company_config').expand(customer_data=customers)
-    # upsert_discounts.partial(schema, table='discounts', date_column='updated_at').expand(customer_data=customers)
-    # upsert_patient_group_ref.partial(schema, table='patient_group_ref', date_column='sync_updated_at').expand(customer_data=customers)
-    # upsert_patient_group.partial(schema, table='patient_group', date_column='sync_updated_at').expand(customer_data=customers)
-    # upsert_patients.partial(schema, table='patients', date_column='updated_at').expand(customer_data=customers)
-    # upsert_product_categories.partial(schema, table='product_categories').expand(customer_data=customers)
-    # upsert_product_checkins.partial(schema, table='product_checkins', date_column='sync_updated_at').expand(customer_data=customers)
-    # upsert_product_filter_index.partial(schema, table='product_filter_index').expand(customer_data=customers)
-    # upsert_product_office_qty.partial(schema, table='product_office_qty').expand(customer_data=customers)
-    # upsert_product_transactions.partial(schema, table='product_transactions', date_column='date').expand(customer_data=customers)
-    # upsert_product_vendors.partial(schema, table='product_vendors', date_column='updated_at').expand(customer_data=customers)
-    # upsert_products.partial(schema, table='products', date_column='sync_updated_at').expand(customer_data=customers)
-    # upsert_register_log.partial(schema, table='register_log', date_column='created_at').expand(customer_data=customers)
-    # upsert_register.partial(schema, table='register', date_column='updated_at').expand(customer_data=customers)
-    # upsert_service_history.partial(schema, table='service_history', date_column='updated_at').expand(customer_data=customers)
-    # upsert_tax_payment.partial(schema, table='tax_payment', date_column='updated_at').expand(customer_data=customers)
-    # upsert_warehouse_orders.partial(schema, table='warehouse_orders', date_column='updated_at').expand(customer_data=customers)
-    # upsert_warehouse_order_items.partial(schema, table='warehouse_order_items', date_column='updated_at').expand(customer_data=customers)
-    # upsert_warehouse_order_logs.partial(schema, table='warehouse_order_logs', date_column='created_at').expand(customer_data=customers)
+    upsert_company_config.partial(schema=schema, table='company_config').expand(customer_data=get_customers_task)
+    upsert_discounts.partial(schema=schema, table='discounts', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_patient_group_ref.partial(schema=schema, table='patient_group_ref', date_column='sync_updated_at').expand(customer_data=get_customers_task)
+    # upsert_patient_group.partial(schema=schema, table='patient_group', date_column='sync_updated_at').expand(customer_data=get_customers_task)
+    # upsert_patients.partial(schema=schema, table='patients', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_product_categories.partial(schema=schema, table='product_categories').expand(customer_data=get_customers_task)
+    # upsert_product_checkins.partial(schema=schema, table='product_checkins', date_column='sync_updated_at').expand(customer_data=get_customers_task)
+    # upsert_product_filter_index.partial(schema=schema, table='product_filter_index').expand(customer_data=get_customers_task)
+    # upsert_product_office_qty.partial(schema=schema, table='product_office_qty').expand(customer_data=get_customers_task)
+    # upsert_product_transactions.partial(schema=schema, table='product_transactions', date_column='date').expand(customer_data=get_customers_task)
+    # upsert_product_vendors.partial(schema=schema, table='product_vendors', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_products.partial(schema=schema, table='products', date_column='sync_updated_at').expand(customer_data=get_customers_task)
+    # upsert_register_log.partial(schema=schema, table='register_log', date_column='created_at').expand(customer_data=get_customers_task)
+    # upsert_register.partial(schema=schema, table='register', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_service_history.partial(schema=schema, table='service_history', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_tax_payment.partial(schema=schema, table='tax_payment', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_warehouse_orders.partial(schema=schema, table='warehouse_orders', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_warehouse_order_items.partial(schema=schema, table='warehouse_order_items', date_column='updated_at').expand(customer_data=get_customers_task)
+    # upsert_warehouse_order_logs.partial(schema=schema, table='warehouse_order_logs', date_column='created_at').expand(customer_data=get_customers_task)
 
 
 default_args = {
