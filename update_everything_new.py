@@ -100,7 +100,7 @@ def get_customers(table, comp_id_list):
         condition = f'''comp_id IN ({', '.join(list(map(str, comp_id_list)))})
         '''
     else:
-        condition = '''
+        condition = f'''
             comp_db_name in (
             select table_schema
             from ext_indica_info.tables
