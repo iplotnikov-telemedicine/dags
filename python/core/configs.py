@@ -2,8 +2,12 @@ import yaml
 import os
 from python.core.datamodels import JobConfig
 
-yml_path = os.path.join(os.getcwd(), 'yml')
-
+current_dir = os.getcwd()
+current_dir_name = os.path.basename(current_dir)
+if current_dir_name == 'airflow':
+    yml_path = os.path.join(current_dir, 'dags', 'yml')
+elif current_dir_name == 'dags':
+    yml_path = os.path.join(current_dir, 'yml')
 
 def get_job_config(job) -> JobConfig:
     with open(yml_path + '/' + job + '.yml', 'r') as jc:
