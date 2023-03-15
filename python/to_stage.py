@@ -20,13 +20,7 @@ cursor = redshift_conn.cursor()
 # getting customers list for loading
 def get_customers(table, comp_id_list, is_full_load=False):
     if is_full_load:
-        condition = f'''
-            comp_db_name in (
-            select table_schema
-            from ext_indica_info.tables
-            where table_schema like '%_company' 
-                and table_name = '{table}')
-        '''
+        condition = 'true'
     elif comp_id_list:
         condition = f'''comp_id IN ({', '.join(list(map(str, comp_id_list)))})
         '''
