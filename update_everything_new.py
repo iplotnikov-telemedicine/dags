@@ -109,6 +109,7 @@ def get_customers(table, comp_id_list):
                 and (
                     update_time >= CURRENT_DATE - INTERVAL '16 HOUR'
                     or table_rows > 0
+                )
             )
         '''
     query = f'''
