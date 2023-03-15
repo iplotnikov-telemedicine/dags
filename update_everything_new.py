@@ -100,23 +100,24 @@ def get_customers(table, comp_id_list):
         condition = f'''comp_id IN ({', '.join(list(map(str, comp_id_list)))})
         '''
     else:
-        condition = '''update_time >= CURRENT_DATE - INTERVAL '16 HOUR'
+        condition = f'''
+            comp_db_name in (
+            select table_schema
+            from ext_indica_info.tables
+            where table_schema like '%_company' 
+                and table_name = '{table}'
+                and update_time >= CURRENT_DATE - INTERVAL '16 HOUR')
         '''
     query = f'''
         SELECT int_customers.comp_id, TRIM(svv_external_schemas.schemaname) as schemaname
         FROM test.int_customers
         INNER JOIN svv_external_schemas
         ON int_customers.comp_db_name = svv_external_schemas.databasename
-        WHERE int_customers.comp_db_name in (
-            select table_schema
-            from ext_indica_info.tables
-            where table_schema like '%_company' 
-                and table_name = '{table}'
-                and {condition})
+        WHERE {condition}
         ORDER BY comp_id
     '''
-    cursor.execute(query)
     logging.info(query)
+    cursor.execute(query)
     customers_dict = {row[0]:row[1] for row in cursor.fetchall()}
     logging.info(f'customers_dict: {customers_dict}')
     logging.info(f'The number of companies is being processed: {len(customers_dict)}')
