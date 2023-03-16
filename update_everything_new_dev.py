@@ -141,7 +141,12 @@ def warehouse_order_items(schema, table, date_column, **kwargs):
     customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
     if not customers_dict:
         comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
-        customers_dict = get_customers(table, comp_id_list)
+        # if the table does not exist before then initiate full load
+        if table_exists is None:
+            logging.info(f'Table {schema}.{table} does not exist before, initiate full load')
+            customers_dict = get_customers(table, comp_id_list, is_full_load=True)
+        else:
+            customers_dict = get_customers(table, comp_id_list)
         Variable.set(task_id, json.dumps(customers_dict))
 
     for comp_id in list(customers_dict.keys()):
