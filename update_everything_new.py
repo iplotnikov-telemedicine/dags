@@ -1627,16 +1627,16 @@ with DAG(
     start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
     # get_customers_task = get_customers()
     upsert_tables_group = upsert_tables()
+    dbt_snapshot = DbtSnapshotOperator(
+        task_id="dbt_snapshot",
+        project_dir="/home/ubuntu/dbt/indica",
+        profiles_dir="/home/ubuntu/.dbt",
+    )
     dbt_run = DbtRunOperator(
         task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
         exclude=["config.materialized:view"]
-    )
-    dbt_snapshot = DbtSnapshotOperator(
-        task_id="dbt_snapshot",
-        project_dir="/home/ubuntu/dbt/indica",
-        profiles_dir="/home/ubuntu/.dbt",
     )
     dbt_test = DbtTestOperator(
         task_id="dbt_test",
@@ -1645,4 +1645,4 @@ with DAG(
     )
     success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
-    start_alert >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
+    start_alert >> upsert_tables_group >> dbt_snapshot >> dbt_run >> dbt_test >> success_alert
