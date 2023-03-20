@@ -1,5 +1,5 @@
 database: dev
-schema: mock
+schema: staging
 table: user_activity_record
 load_type: increment_with_delete
 increment_column: updated_at

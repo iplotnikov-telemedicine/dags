@@ -1,5 +1,5 @@
 database: dev
-schema: mock
+schema: staging
 table: register_log
 load_type: increment
 increment_column: created_at

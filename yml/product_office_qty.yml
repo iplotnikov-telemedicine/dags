@@ -1,5 +1,5 @@
 database: dev
-schema: mock
+schema: staging
 table: product_office_qty
 load_type: full
 increment_column: 

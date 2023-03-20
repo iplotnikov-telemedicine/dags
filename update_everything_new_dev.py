@@ -27,86 +27,81 @@ redshift_conn = redshift_hook.get_conn()
 cursor = redshift_conn.cursor()
 
 
-# def start_slack_alert(context):
-#     slack_webhook_token = BaseHook.get_connection('slack').password
-#     slack_msg = f"""
-#         :rocket: Start
-#         *Dag*: {context.get('task_instance').dag_id}
-#         *Run ID*: {context.get('task_instance').run_id}
-#         *Execution Time*: {context.get('ts')}
-#         *Log Url*: {context.get('task_instance').log_url}
-#     """
-#     alert = SlackWebhookOperator(
-#         task_id='slack_test',
-#         http_conn_id='slack',
-#         webhook_token=slack_webhook_token,
-#         message=slack_msg,
-#         username='airflow')
-#     return alert.execute(context=context)
+def start_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection('slack').password
+    slack_msg = f"""
+        :rocket: Start
+        *Dag*: {context.get('task_instance').dag_id}
+        *Run ID*: {context.get('task_instance').run_id}
+        *Execution Time*: {context.get('ts')}
+        *Log Url*: {context.get('task_instance').log_url}
+    """
+    alert = SlackWebhookOperator(
+        task_id='slack_test',
+        http_conn_id='slack',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        username='airflow')
+    return alert.execute(context=context)
 
 
-# def failure_slack_alert(context):
-#     slack_webhook_token = BaseHook.get_connection('slack').password
-#     slack_msg = f"""
-#         :red_circle: Failure
-#         *Task*: {context.get('task_instance').task_id}
-#         *Dag*: {context.get('task_instance').dag_id}
-#         *Execution Time*: {context.get('ts')}
-#         *Log Url*: {context.get('task_instance').log_url}
-#     """
-#     alert = SlackWebhookOperator(
-#         task_id='slack_test',
-#         http_conn_id='slack',
-#         webhook_token=slack_webhook_token,
-#         message=slack_msg,
-#         username='airflow')
-#     return alert.execute(context=context)
+def failure_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection('slack').password
+    slack_msg = f"""
+        :red_circle: Failure
+        *Task*: {context.get('task_instance').task_id}
+        *Dag*: {context.get('task_instance').dag_id}
+        *Execution Time*: {context.get('ts')}
+        *Log Url*: {context.get('task_instance').log_url}
+    """
+    alert = SlackWebhookOperator(
+        task_id='slack_test',
+        http_conn_id='slack',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        username='airflow')
+    return alert.execute(context=context)
 
 
-# def retry_slack_alert(context):
-#     slack_webhook_token = BaseHook.get_connection('slack').password
-#     slack_msg = f"""
-#         :large_yellow_circle: Retry
-#         *Task*: {context.get('task_instance').task_id}
-#         *Dag*: {context.get('task_instance').dag_id}
-#         *Execution Time*: {context.get('ts')}
-#         *Log Url*: {context.get('task_instance').log_url}
-#     """
-#     alert = SlackWebhookOperator(
-#         task_id='slack_test',
-#         http_conn_id='slack',
-#         webhook_token=slack_webhook_token,
-#         message=slack_msg,
-#         username='airflow')
-#     return alert.execute(context=context)
+def retry_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection('slack').password
+    slack_msg = f"""
+        :large_yellow_circle: Retry
+        *Task*: {context.get('task_instance').task_id}
+        *Dag*: {context.get('task_instance').dag_id}
+        *Execution Time*: {context.get('ts')}
+        *Log Url*: {context.get('task_instance').log_url}
+    """
+    alert = SlackWebhookOperator(
+        task_id='slack_test',
+        http_conn_id='slack',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        username='airflow')
+    return alert.execute(context=context)
 
 
-# def success_slack_alert(context):
-#     slack_webhook_token = BaseHook.get_connection('slack').password
-#     slack_msg = f"""
-#         :large_green_circle: Success
-#         *Dag*: {context.get('task_instance').dag_id}
-#         *Run ID*: {context.get('task_instance').run_id}
-#         *Execution Time*: {context.get('ts')}
-#         *Log Url*: {context.get('task_instance').log_url}
-#     """
-#     alert = SlackWebhookOperator(
-#         task_id='slack_test',
-#         http_conn_id='slack',
-#         webhook_token=slack_webhook_token,
-#         message=slack_msg,
-#         username='airflow')
-#     return alert.execute(context=context)
+def success_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection('slack').password
+    slack_msg = f"""
+        :large_green_circle: Success
+        *Dag*: {context.get('task_instance').dag_id}
+        *Run ID*: {context.get('task_instance').run_id}
+        *Execution Time*: {context.get('ts')}
+        *Log Url*: {context.get('task_instance').log_url}
+    """
+    alert = SlackWebhookOperator(
+        task_id='slack_test',
+        http_conn_id='slack',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        username='airflow')
+    return alert.execute(context=context)
 
 
 @task
-def warehouse_order_items(schema, table, date_column, **kwargs):
+def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
-
-    # customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # # get max_comp_id from target table and filter list of customers
-    # max_comp_id = int(Variable.get(task_id, 0))
-    # customers = [c for c in customers if c[0] > max_comp_id]
 
     # check if table not exists
     query = f'''
@@ -212,28 +207,28 @@ def warehouse_order_items(schema, table, date_column, **kwargs):
 
 def get_tasks():
     return [
-        {'task_id': 'brands', 'op_args': ['brands']},
-        {'task_id': 'company_config', 'op_args': ['company_config']},
-        {'task_id': 'discounts', 'op_args': ['discounts']},
-        {'task_id': 'patient_group_ref', 'op_args': ['patient_group_ref']},
-        {'task_id': 'patient_group', 'op_args': ['patient_group']},
-        {'task_id': 'patients', 'op_args': ['patients']},
-        {'task_id': 'product_categories', 'op_args': ['product_categories']},
-        {'task_id': 'product_checkins', 'op_args': ['product_checkins']},
-        {'task_id': 'product_filter_index', 'op_args': ['product_filter_index']},
-        {'task_id': 'product_office_qty', 'op_args': ['product_office_qty']},
-        {'task_id': 'product_transactions', 'op_args': ['product_transactions']},
-        {'task_id': 'product_vendors', 'op_args': ['product_vendors']},
-        {'task_id': 'products', 'op_args': ['products']},
-        {'task_id': 'register_log', 'op_args': ['register_log']},
-        {'task_id': 'service_history', 'op_args': ['service_history']},
-        {'task_id': 'sf_guard_group', 'op_args': ['sf_guard_group']},
-        {'task_id': 'sf_guard_user_group', 'op_args': ['sf_guard_user_group']},
-        {'task_id': 'sf_guard_user', 'op_args': ['sf_guard_user']},
-        {'task_id': 'tax_payment', 'op_args': ['tax_payment']},
-        {'task_id': 'user_activity_record', 'op_args': ['user_activity_record']},
-        {'task_id': 'warehouse_order_logs', 'op_args': ['warehouse_order_logs']},
-        {'task_id': 'warehouse_orders', 'op_args': ['warehouse_orders']}
+        {'task_id': 'upsert_brands', 'op_args': ['brands']},
+        {'task_id': 'upsert_company_config', 'op_args': ['company_config']},
+        {'task_id': 'upsert_discounts', 'op_args': ['discounts']},
+        {'task_id': 'upsert_patient_group_ref', 'op_args': ['patient_group_ref']},
+        {'task_id': 'upsert_patient_group', 'op_args': ['patient_group']},
+        {'task_id': 'upsert_patients', 'op_args': ['patients']},
+        {'task_id': 'upsert_product_categories', 'op_args': ['product_categories']},
+        {'task_id': 'upsert_product_checkins', 'op_args': ['product_checkins']},
+        {'task_id': 'upsert_product_filter_index', 'op_args': ['product_filter_index']},
+        {'task_id': 'upsert_product_office_qty', 'op_args': ['product_office_qty']},
+        {'task_id': 'upsert_product_transactions', 'op_args': ['product_transactions']},
+        {'task_id': 'upsert_product_vendors', 'op_args': ['product_vendors']},
+        {'task_id': 'upsert_products', 'op_args': ['products']},
+        {'task_id': 'upsert_register_log', 'op_args': ['register_log']},
+        {'task_id': 'upsert_service_history', 'op_args': ['service_history']},
+        {'task_id': 'upsert_sf_guard_group', 'op_args': ['sf_guard_group']},
+        {'task_id': 'upsert_sf_guard_user_group', 'op_args': ['sf_guard_user_group']},
+        {'task_id': 'upsert_sf_guard_user', 'op_args': ['sf_guard_user']},
+        {'task_id': 'upsert_tax_payment', 'op_args': ['tax_payment']},
+        {'task_id': 'upsert_user_activity_record', 'op_args': ['user_activity_record']},
+        {'task_id': 'upsert_warehouse_order_logs', 'op_args': ['warehouse_order_logs']},
+        {'task_id': 'upsert_warehouse_orders', 'op_args': ['warehouse_orders']}
     ]
 
 
@@ -255,9 +250,7 @@ with DAG(
     default_args=default_args,
     catchup=False,
 ) as dag:
-    # start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
-
-    # get_customers_task = get_customers()
+    start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
 
 
     with TaskGroup('upsert_tables') as upsert_tables_group:
@@ -270,26 +263,24 @@ with DAG(
                 op_args=op_args,
                 provide_context=True
             )
-        warehouse_order_items(schema='mock', table='warehouse_order_items', date_column='updated_at')
+        upsert_warehouse_order_items(schema='staging', table='warehouse_order_items', date_column='updated_at')
         
 
-    # dbt_run = DbtRunOperator(
-    #     task_id="dbt_run",
-    #     project_dir="/home/ubuntu/dbt/indica",
-    #     profiles_dir="/home/ubuntu/.dbt",
-    # )
-    # dbt_snapshot = DbtSnapshotOperator(
-    #     task_id="dbt_snapshot",
-    #     project_dir="/home/ubuntu/dbt/indica",
-    #     profiles_dir="/home/ubuntu/.dbt",
-    # )
-    # dbt_test = DbtTestOperator(
-    #     task_id="dbt_test",
-    #     project_dir="/home/ubuntu/dbt/indica",
-    #     profiles_dir="/home/ubuntu/.dbt",
-    # )
-    # success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
+    dbt_run = DbtRunOperator(
+        task_id="dbt_run",
+        project_dir="/home/ubuntu/dbt/indica",
+        profiles_dir="/home/ubuntu/.dbt",
+    )
+    dbt_snapshot = DbtSnapshotOperator(
+        task_id="dbt_snapshot",
+        project_dir="/home/ubuntu/dbt/indica",
+        profiles_dir="/home/ubuntu/.dbt",
+    )
+    dbt_test = DbtTestOperator(
+        task_id="dbt_test",
+        project_dir="/home/ubuntu/dbt/indica",
+        profiles_dir="/home/ubuntu/.dbt",
+    )
+    success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
-# start_alert >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
-upsert_tables_group
-
+start_alert >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert

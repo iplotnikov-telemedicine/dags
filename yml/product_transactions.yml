@@ -1,5 +1,5 @@
 database: dev
-schema: mock
+schema: staging
 table: product_transactions
 load_type: increment
 increment_column: date
