@@ -1202,7 +1202,7 @@ with DAG(
 ) as dag:
     # start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
     # get_customers_task = get_customers()
-    upsert_tables_group = upsert_tables(get_customers())
+    upsert_tables_group = upsert_tables(get_customers_task=get_customers())
 
     # dbt_run = DbtRunOperator(
     #     task_id="dbt_run",
