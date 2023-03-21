@@ -32,6 +32,8 @@ map:
   -
     source: note
   -
+    source: item_type
+  -
     source: transfer_direction
   -
     source: qty_free
