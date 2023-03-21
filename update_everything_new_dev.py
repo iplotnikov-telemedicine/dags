@@ -133,16 +133,21 @@ def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
         redshift_conn.commit()
         logging.info(f'Table {schema}.{table} created successfully')
 
-    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
-    if not customers_dict:
-        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
-        # if the table does not exist before then initiate full load
-        if table_exists is None:
-            logging.info(f'Table {schema}.{table} does not exist before, initiate full load')
-            customers_dict = get_customers(table, comp_id_list, is_full_load=True)
-        else:
-            customers_dict = get_customers(table, comp_id_list)
-        Variable.set(task_id, json.dumps(customers_dict))
+    # getting customers list for task run
+    comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+    logging.info(f'comp_id_list is: {comp_id_list}')
+    if not comp_id_list:
+        customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+        logging.info(f'customers_dict from Variable is: {customers_dict}')
+        if not customers_dict:
+            if table_exists is None:
+                logging.info(f'Table {schema}.{table} does not exist before, initiate full load')
+                customers_dict = get_customers(table, comp_id_list, is_full_load=True)
+            else:
+                customers_dict = get_customers(table, comp_id_list)
+    else:
+        customers_dict = get_customers(table, comp_id_list)
+    logging.info(f'Start loading for customers_dict: {customers_dict}')
 
     for comp_id in list(customers_dict.keys()):
         ext_schema = customers_dict[comp_id]
@@ -245,7 +250,7 @@ default_args = {
 with DAG(
     dag_id='update_everything_new_dev',
     max_active_tasks=32,
-    schedule=None, # UTC time
+    schedule='0 8 * * *', # UTC time
     start_date=datetime(year=2022, month=12, day=8),
     default_args=default_args,
     catchup=False,
@@ -254,22 +259,23 @@ with DAG(
 
 
     with TaskGroup('upsert_tables') as upsert_tables_group:
+        schema = 'staging'
         for task_params in get_tasks():
             task_id = task_params['task_id']
-            op_args = task_params['op_args']
+            op_args = task_params['op_args'] + [schema]
             task = PythonOperator(
                 task_id=task_id,
                 python_callable=stg_load,
                 op_args=op_args,
-                provide_context=True
             )
-        upsert_warehouse_order_items(schema='staging', table='warehouse_order_items', date_column='updated_at')
+        upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='updated_at')
         
 
     dbt_run = DbtRunOperator(
         task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
+        exclude=["config.materialized:view"]
     )
     dbt_snapshot = DbtSnapshotOperator(
         task_id="dbt_snapshot",
