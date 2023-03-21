@@ -143,6 +143,7 @@ map:
     source: pat_o_phone3
   -
     source: pat_fax
+  -
     source: pat_lng
   -
     source: current_rec_valid_to
