@@ -245,7 +245,7 @@ default_args = {
 with DAG(
     dag_id='update_everything_new_dev',
     max_active_tasks=32,
-    schedule=None, # UTC time
+    schedule='0 8 * * *', # UTC time
     start_date=datetime(year=2022, month=12, day=8),
     default_args=default_args,
     catchup=False,
@@ -270,6 +270,7 @@ with DAG(
         task_id="dbt_run",
         project_dir="/home/ubuntu/dbt/indica",
         profiles_dir="/home/ubuntu/.dbt",
+        exclude=["config.materialized:view"]
     )
     dbt_snapshot = DbtSnapshotOperator(
         task_id="dbt_snapshot",
