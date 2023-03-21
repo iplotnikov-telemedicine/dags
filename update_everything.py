@@ -238,21 +238,21 @@ def get_tasks():
     ]
 
 
+@task
+def get_dag_conf(**kwargs):
+    comp_id_list = []
+    comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+    logging.info(f'get_dag_conf - comp_id_list: {comp_id_list}')
+    return comp_id_list
+
+
 @task_group
 def upsert_tables_mapping():
-
-    @task
-    def get_dag_conf(**kwargs):
-        comp_id_list = []
-        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
-        logging.info(f'get_dag_conf - comp_id_list: {comp_id_list}')
-        return comp_id_list
-
     comp_id_list = get_dag_conf()
-
     for task_params in get_tasks():
         task_id_name, job_name = task_params['task_id'], ', '.join(list(map(str, task_params['op_args'])))
 
+        @task
         def get_customers_data():
             return get_customers_map(table=job_name, comp_id_list=comp_id_list)
 
@@ -263,6 +263,8 @@ def upsert_tables_mapping():
         upsert_task.expand(customers_data=customer_data)
 
     upsert_warehouse_order_items(schema='mock', table='warehouse_order_items', date_column='updated_at')
+
+    
 
 
 default_args = {
@@ -288,16 +290,16 @@ with DAG(
     upsert_tables_group_mapping = upsert_tables_mapping()
 
     with TaskGroup('upsert_tables') as upsert_tables_group:
+        schema = 'staging'
         for task_params in get_tasks():
             task_id = task_params['task_id']
-            op_args = task_params['op_args']
+            op_args = task_params['op_args'] + [schema]
             task = PythonOperator(
                 task_id=task_id,
                 python_callable=stg_load,
                 op_args=op_args,
-                provide_context=True
             )
-        upsert_warehouse_order_items(schema='mock', table='warehouse_order_items', date_column='updated_at')
+        upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='updated_at')
 
     dbt_run = DbtRunOperator(
         task_id="dbt_run",
