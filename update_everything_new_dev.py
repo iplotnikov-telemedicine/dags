@@ -292,7 +292,7 @@ with DAG(
         )
         success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
-        start_alert >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
+        start_alert >> upsert_tables_group >> dbt_snapshot >> dbt_run >> dbt_test >> success_alert
 
     else:
         with TaskGroup('upsert_tables') as upsert_tables_group:
