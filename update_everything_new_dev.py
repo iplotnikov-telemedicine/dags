@@ -27,7 +27,7 @@ redshift_conn = redshift_hook.get_conn()
 cursor = redshift_conn.cursor()
 
 # set up environment
-schema = 'staging'
+schema = 'mock'
 
 
 def start_slack_alert(context):
@@ -262,7 +262,6 @@ with DAG(
         start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
 
         with TaskGroup('upsert_tables') as upsert_tables_group:
-            # schema = 'staging'
             for task_params in get_tasks():
                 task_id = task_params['task_id']
                 op_args = task_params['op_args'] + [schema]
@@ -295,7 +294,6 @@ with DAG(
 
     else:
         with TaskGroup('upsert_tables') as upsert_tables_group:
-            # schema = 'staging'
             for task_params in get_tasks():
                 task_id = task_params['task_id']
                 op_args = task_params['op_args'] + [schema]
