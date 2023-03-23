@@ -118,8 +118,8 @@ def stg_load(customer_data, job_name, schema):
         logging.info(f'''insert query is: 
         {query}''')
         cursor.execute(query)
-        cursor.execute('END')
         logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {pendulum.now()}')
+        cursor.execute('END')
     elif load_type == 'full':
         # inserting new data with full load to target
         # deleting old data from target
@@ -141,8 +141,8 @@ def stg_load(customer_data, job_name, schema):
         logging.info(f'''insert query is: 
         {query}''')
         cursor.execute(query)
-        cursor.execute('END')
         logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {pendulum.now()}')
+        cursor.execute('END')
     elif load_type == 'increment_with_delete':
         # creating temp table with new data increment
         query = f'''
@@ -183,8 +183,8 @@ def stg_load(customer_data, job_name, schema):
         logging.info(f'''insert query is: 
         {query}''')
         cursor.execute(query)
-        cursor.execute('END')
         logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {pendulum.now()}')
+        cursor.execute('END')
         # deleting temp table
         query = f'''
             DROP TABLE {table}_{comp_id}_temp

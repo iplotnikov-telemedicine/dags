@@ -203,7 +203,7 @@ def upsert_tables_mapping():
         customer_data=get_customers_data()
         upsert_task = upsert_task.partial(job_name=job_name).expand(customers_data=customer_data)
 
-    check_table_task >> upsert_task
+        check_table_task >> upsert_task
 
 
     @task(task_id = 'check_table_upsert_warehouse_order_items')
