@@ -1,5 +1,5 @@
 database: dev
-schema: mock
+schema: staging
 table: brands
 load_type: increment_with_delete
 increment_column: sync_updated_at

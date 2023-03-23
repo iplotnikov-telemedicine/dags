@@ -1,18 +1,14 @@
 database: dev
 schema: staging
-table: sf_guard_group
+table: sf_guard_user_permission
 load_type: increment_with_delete
 increment_column: updated_at
-pk: ['id']
+pk: ['user_id', 'permission_id']
 map:
   -
-    source: id
+    source: user_id
   -
-    source: "name"
-  -
-    source: description
-  -
-    source: is_main
+    source: permission_id
   -
     source: created_at
   -

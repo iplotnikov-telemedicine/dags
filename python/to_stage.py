@@ -5,7 +5,6 @@ import pendulum
 import json
 from python.core.configs import get_job_config
 from python.core.utils import get_fields_for
-# from airflow.decorators import task
 
 
 # getting connection to Redshift DB
@@ -55,7 +54,8 @@ def stg_load(*op_args, **kwargs):
     ti, task_id = kwargs['ti'], kwargs['task'].task_id
     job_cfg = get_job_config(op_args[0])
     load_type = job_cfg.load_type
-    target_schema = job_cfg.schema
+    target_schema = job_cfg.schema if op_args[1] is None else op_args[1]
+    logging.info(f'target_schema is: {target_schema}')
     table = job_cfg.table
     increment = job_cfg.increment_column
     pk = job_cfg.pk
@@ -86,24 +86,22 @@ def stg_load(*op_args, **kwargs):
         redshift_conn.commit()
         logging.info(f'Table {target_schema}.{table} created successfully')
 
+    # getting customers list for task run
+    comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+    logging.info(f'comp_id_list is: {comp_id_list}')
+    if not comp_id_list:
+        customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
+        logging.info(f'customers_dict from Variable is: {customers_dict}')
+        if not customers_dict:
+            if table_exists is None:
+                logging.info(f'Table {target_schema}.{table} does not exist before, initiate full load')
+                customers_dict = get_customers(table, comp_id_list, is_full_load=True)
+            else:
+                customers_dict = get_customers(table, comp_id_list)
+    else:
+        customers_dict = get_customers(table, comp_id_list)
+    logging.info(f'Start loading for customers_dict: {customers_dict}')
 
-    # #old aproach for getting customers
-    # customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # # get max_comp_id from target table and filter list of customers
-    # max_comp_id = int(Variable.get(task_id, 0))
-    # customers = [c for c in customers if c[0] > max_comp_id]
-    # for comp_id, ext_schema in customers:
-
-    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
-    if not customers_dict:
-        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
-        # if the table does not exist before then initiate full load
-        if table_exists is None:
-            logging.info(f'Table {target_schema}.{table} does not exist before, initiate full load')
-            customers_dict = get_customers(table, comp_id_list, is_full_load=True)
-        else:
-            customers_dict = get_customers(table, comp_id_list)
-        Variable.set(task_id, json.dumps(customers_dict))
     logging.info(f'Start loading with type: {load_type}')
     for comp_id in list(customers_dict.keys()):
         ext_schema = customers_dict[comp_id]

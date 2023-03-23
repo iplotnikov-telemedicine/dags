@@ -1,5 +1,5 @@
 database: dev
-schema: mock
+schema: staging
 table: product_transactions
 load_type: increment
 increment_column: date
@@ -31,6 +31,8 @@ map:
     source: date
   -
     source: note
+  -
+    source: item_type
   -
     source: transfer_direction
   -
