@@ -1,30 +1,29 @@
 import sys
 import os
 sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
-from datetime import datetime, timedelta
+import pendulum
+import logging
+# import json
 from airflow.models import DAG
-from airflow.operators.python import PythonOperator
+# from airflow.models import Variable
+# from airflow.utils.task_group import TaskGroup
+# from airflow.operators.python import PythonOperator
+from airflow.operators.empty import EmptyOperator
 # from airflow.providers.amazon.aws.operators.redshift_sql import RedshiftSQLOperator
 from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
-from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator, DbtSnapshotOperator
-import logging
-import json
-from airflow.decorators import task, task_group
 from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
+from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator, DbtSnapshotOperator
+from airflow.decorators import task, task_group
 from airflow.hooks.base import BaseHook
-from airflow.operators.empty import EmptyOperator
-from airflow.models import Variable
-from python.to_stage import stg_load, get_customers
-from python.to_stage_dec import stg_load as stg_dec, get_customers as get_customers_map
-from airflow.utils.task_group import TaskGroup
+from python.to_stage_task_mapping import stg_load, get_customers, check_table
+from python.core.connections import redshint_conn_dev
+
+
+env = 'mock' # 'dev' - production, 'mock' - development
 
 
 # Get connection to Redshift DB
-redshift_hook = RedshiftSQLHook(
-    redshift_conn_id='redshift_default',
-    schema='dev'
-)
-redshift_conn = redshift_hook.get_conn()
+redshift_conn = redshint_conn_dev()
 cursor = redshift_conn.cursor()
 
 
@@ -100,115 +99,58 @@ def success_slack_alert(context):
     return alert.execute(context=context)
 
 
-@task(max_active_tis_per_dag=1)
-def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
-    ti, task_id = kwargs['ti'], kwargs['task'].task_id
-
-    # customers = ti.xcom_pull(key='customers', task_ids='get_customers')
-    # # get max_comp_id from target table and filter list of customers
-    # max_comp_id = int(Variable.get(task_id, 0))
-    # customers = [c for c in customers if c[0] > max_comp_id]
-
-    # check if table not exists
+def upsert_warehouse_order_items(customer_data, schema, table, date_column):
+    (comp_id, ext_schema) = customer_data
+    logging.info(f'Task is starting for company {comp_id}')
+    # creating temp table with new data increment
     query = f'''
-        select 1
-        from information_schema.tables
-        where table_schema = '{schema}' and table_name = '{table}'
-        '''
+        CREATE temporary TABLE {table}_{comp_id}_temp as
+        SELECT {table}.*, warehouse_orders.confirmed_at
+        FROM {ext_schema}.{table}
+        INNER JOIN {ext_schema}.warehouse_orders
+        ON {table}.order_id = warehouse_orders.id
+        WHERE {table}.{date_column} > (
+            SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
+            FROM {schema}.{table}
+            WHERE comp_id = {comp_id}
+        ) and {table}.{date_column} < CURRENT_DATE + interval '8 hours'
+            and warehouse_orders.confirmed_at IS NOT NULL
+    '''
     cursor.execute(query)
-    table_exists = cursor.fetchone()
-    logging.info(f'Table exists value: {table_exists}')
-    if table_exists is None:
-        # creating blank table from schema 'ext_indica_c9928_company' because of this company has not blank tables
-        comp_id = 9928 #customers[0][0]
-        ext_schema = 'ext_indica_c9928_company' #customers[0][1]
-        query = f'''
-            create table {schema}.{table} as
-            select {comp_id} as comp_id, id, order_id, product_id, "name", descr, price_type, price_per, 
-                charge_by, price, qty, qty_free, amount, tax, discount_value, discount_type_bak, total_amount, 
-                created_at, updated_at, is_charge_by_order, is_free, free_discount, income, discount_amount, 
-                item_type, count, special_id, special_item_id, is_half_eighth, is_returned, returned_amount, 
-                discount_type, free_amount, paid_amount, wcii_cart_item, sync_created_at, sync_updated_at, 
-                product_checkin_id, is_excise, returned_at, is_marijuana_product, product_is_tax_exempt, 
-                is_metrc, is_under_package_control, base_amount, discount_id, delivery_tax, discount_count, 
-                is_exchanged, exchanged_at, product_brutto_weight, product_brutto_weight_validation, current_timestamp as confirmed_at, current_timestamp as inserted_at
-            from {ext_schema}.{table}
-            where false
-            '''
-        cursor.execute(query)
-        redshift_conn.commit()
-        logging.info(f'Table {schema}.{table} created successfully')
-
-    customers_dict = Variable.get(task_id, dict(), deserialize_json=True)
-    if not customers_dict:
-        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
-        # if the table does not exist before then initiate full load
-        if table_exists is None:
-            logging.info(f'Table {schema}.{table} does not exist before, initiate full load')
-            customers_dict = get_customers(table, comp_id_list, is_full_load=True)
-        else:
-            customers_dict = get_customers(table, comp_id_list)
-        Variable.set(task_id, json.dumps(customers_dict))
-
-    for comp_id in list(customers_dict.keys()):
-        ext_schema = customers_dict[comp_id]
-        logging.info(f'Task is starting for company {comp_id}')
-        # creating temp table with new data increment
-        query = f'''
-            CREATE temporary TABLE {table}_{comp_id}_temp as
-            SELECT {table}.*, warehouse_orders.confirmed_at
-            FROM {ext_schema}.{table}
-            INNER JOIN {ext_schema}.warehouse_orders
-            ON {table}.order_id = warehouse_orders.id
-            WHERE {table}.{date_column} > (
-                SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-                FROM {schema}.{table}
-                WHERE comp_id = {comp_id}
-            ) and {table}.{date_column} < CURRENT_DATE + interval '8 hours'
-                and warehouse_orders.confirmed_at IS NOT NULL
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is created')
-        # deleting from target table data that were updated
-        query = f'''
-            DELETE FROM {schema}.{table}
-            USING {table}_{comp_id}_temp
-            WHERE {schema}.{table}.comp_id = {comp_id}
-                AND {schema}.{table}.id = {table}_{comp_id}_temp.id
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {datetime.now()}')
-        # inserting increment to target table
-        query = f'''
-            INSERT INTO {schema}.{table}
-            SELECT {comp_id} as comp_id, id, order_id, product_id, "name", descr, price_type, price_per, 
-                charge_by, price, qty, qty_free, amount, tax, discount_value, discount_type_bak, total_amount, 
-                created_at, updated_at, is_charge_by_order, is_free, free_discount, income, discount_amount, 
-                item_type, count, special_id, special_item_id, is_half_eighth, is_returned, returned_amount, 
-                discount_type, free_amount, paid_amount, wcii_cart_item, sync_created_at, sync_updated_at, 
-                product_checkin_id, is_excise, returned_at, is_marijuana_product, product_is_tax_exempt, 
-                is_metrc, is_under_package_control, base_amount, discount_id, delivery_tax, discount_count, 
-                is_exchanged, exchanged_at, product_brutto_weight, product_brutto_weight_validation, confirmed_at, current_timestamp as inserted_at
-            FROM {table}_{comp_id}_temp
-        '''
-        cursor.execute(query)
-        logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {datetime.now()}')
-        # deleting temp table
-        query = f'''
-            DROP TABLE {table}_{comp_id}_temp
-        '''
-        cursor.execute(query)
-        logging.info(f'Temp table is dropped')
-        # commit to target DB
-        redshift_conn.commit()
-        logging.info(f'Task is finished for company {comp_id}')
-    #     Variable.set(task_id, comp_id)
-    # Variable.set(task_id, 0)
-        del customers_dict[comp_id]
-        logging.info(f'Number of companies left: {len(customers_dict)}')
-        Variable.set(task_id, json.dumps(customers_dict))
-    Variable.delete(task_id)
-
+    logging.info(f'Temp table is created')
+    # deleting from target table data that were updated
+    query = f'''
+        DELETE FROM {schema}.{table}
+        USING {table}_{comp_id}_temp
+        WHERE {schema}.{table}.comp_id = {comp_id}
+            AND {schema}.{table}.id = {table}_{comp_id}_temp.id
+    '''
+    cursor.execute(query)
+    logging.info(f'{cursor.rowcount} rows deleted for {comp_id} at {pendulum.now()}')
+    # inserting increment to target table
+    query = f'''
+        INSERT INTO {schema}.{table}
+        SELECT {comp_id} as comp_id, id, order_id, product_id, "name", descr, price_type, price_per, 
+            charge_by, price, qty, qty_free, amount, tax, discount_value, discount_type_bak, total_amount, 
+            created_at, updated_at, is_charge_by_order, is_free, free_discount, income, discount_amount, 
+            item_type, count, special_id, special_item_id, is_half_eighth, is_returned, returned_amount, 
+            discount_type, free_amount, paid_amount, wcii_cart_item, sync_created_at, sync_updated_at, 
+            product_checkin_id, is_excise, returned_at, is_marijuana_product, product_is_tax_exempt, 
+            is_metrc, is_under_package_control, base_amount, discount_id, delivery_tax, discount_count, 
+            is_exchanged, exchanged_at, product_brutto_weight, product_brutto_weight_validation, confirmed_at, current_timestamp as inserted_at
+        FROM {table}_{comp_id}_temp
+    '''
+    cursor.execute(query)
+    logging.info(f'{cursor.rowcount} rows inserted for {comp_id} at {pendulum.now()}')
+    # deleting temp table
+    query = f'''
+        DROP TABLE {table}_{comp_id}_temp
+    '''
+    cursor.execute(query)
+    logging.info(f'Temp table is dropped')
+    # commit to target DB
+    redshift_conn.commit()
+    logging.info(f'Task is finished for company {comp_id}')
 
 
 def get_tasks():
@@ -238,86 +180,108 @@ def get_tasks():
     ]
 
 
-@task
-def get_dag_conf(**kwargs):
-    comp_id_list = []
-    comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
-    logging.info(f'get_dag_conf - comp_id_list: {comp_id_list}')
-    return comp_id_list
-
-
 @task_group
 def upsert_tables_mapping():
-    comp_id_list = get_dag_conf()
     for task_params in get_tasks():
         task_id_name, job_name = task_params['task_id'], ', '.join(list(map(str, task_params['op_args'])))
 
-        @task
-        def get_customers_data():
-            return get_customers_map(table=job_name, comp_id_list=comp_id_list)
+        @task(task_id='get_customers_' + task_id_name)
+        def get_customers_data(**kwargs):
+            comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+            logging.info(f'comp_id_list: {comp_id_list}')
+            return get_customers(table=job_name, comp_id_list=comp_id_list)
+
+        @task(task_id = 'check_table_' + task_id_name)
+        def check_table_task(job_name, schema):
+            return check_table(job_name=job_name, schema=schema)
+        check_table_task = check_table_task(job_name=job_name, schema=env)
+
 
         @task(task_id=task_id_name, max_active_tis_per_dag=1)
-        def upsert_task(customers_data):
-            stg_dec(customers_data=customers_data, job_name=job_name)
+        def upsert_task(customers_data, job_name, schema=env):
+            stg_load(customer_data=customers_data, job_name=job_name, schema=schema)
         customer_data=get_customers_data()
-        upsert_task.expand(customers_data=customer_data)
+        upsert_task = upsert_task.partial(job_name=job_name).expand(customers_data=customer_data)
 
-    upsert_warehouse_order_items(schema='mock', table='warehouse_order_items', date_column='updated_at')
+    check_table_task >> upsert_task
+
+
+    @task(task_id = 'check_table_upsert_warehouse_order_items')
+    def check_table_task(job_name, schema):
+        return check_table(job_name=job_name, schema=schema)
+    check_table_task = check_table_task(job_name='warehouse_order_items', schema=env)
+
+
+    @task(task_id='get_customers_upsert_warehouse_order_items')
+    def get_customers_data(**kwargs):
+        comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+        logging.info(f'comp_id_list: {comp_id_list}')
+        return get_customers(table='warehouse_order_items', comp_id_list=comp_id_list)
+
+    @task(task_id='upsert_warehouse_order_items', max_active_tis_per_dag=1)
+    def upsert_task(customers_data):
+        upsert_warehouse_order_items(customer_data=customers_data, schema=env, table='warehouse_order_items', date_column='updated_at')
+    customer_data=get_customers_data()
+    upsert_task = upsert_task.expand(customers_data=customer_data)
+
+    check_table_task >> upsert_task
+
 
     
-
 
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'on_failure_callback': failure_slack_alert,
-    'on_retry_callback': retry_slack_alert,
+    # 'on_failure_callback': failure_slack_alert,
+    # 'on_retry_callback': retry_slack_alert,
     'retries': 10,
-    'retry_delay': timedelta(seconds=60)
+    'retry_delay': pendulum.duration(seconds=60)
 }
 
 
 with DAG(
     dag_id='update_everything',
     max_active_tasks=32,
-    schedule='0 8 * * *', # UTC time
-    start_date=datetime(year=2022, month=12, day=8),
+    schedule=None, #'0 8 * * *', # UTC time
+    start_date=pendulum.datetime(2022, 12, 8),
     default_args=default_args,
     catchup=False,
 ) as dag:
-    start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
+    # start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
 
     upsert_tables_group_mapping = upsert_tables_mapping()
 
-    with TaskGroup('upsert_tables') as upsert_tables_group:
-        schema = 'staging'
-        for task_params in get_tasks():
-            task_id = task_params['task_id']
-            op_args = task_params['op_args'] + [schema]
-            task = PythonOperator(
-                task_id=task_id,
-                python_callable=stg_load,
-                op_args=op_args,
-            )
-        upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='updated_at')
+    # with TaskGroup('upsert_tables') as upsert_tables_group:
+    #     schema = 'staging'
+    #     for task_params in get_tasks():
+    #         task_id = task_params['task_id']
+    #         op_args = task_params['op_args'] + [schema]
+    #         task = PythonOperator(
+    #             task_id=task_id,
+    #             python_callable=stg_load,
+    #             op_args=op_args,
+    #         )
+    #     upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='updated_at')
 
-    dbt_run = DbtRunOperator(
-        task_id="dbt_run",
-        project_dir="/home/ubuntu/dbt/indica",
-        profiles_dir="/home/ubuntu/.dbt",
-        exclude=["config.materialized:view"]
-    )
-    dbt_snapshot = DbtSnapshotOperator(
-        task_id="dbt_snapshot",
-        project_dir="/home/ubuntu/dbt/indica",
-        profiles_dir="/home/ubuntu/.dbt",
-    )
-    dbt_test = DbtTestOperator(
-        task_id="dbt_test",
-        project_dir="/home/ubuntu/dbt/indica",
-        profiles_dir="/home/ubuntu/.dbt",
-    )
-    success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
+    # dbt_run = DbtRunOperator(
+    #     task_id="dbt_run",
+    #     project_dir="/home/ubuntu/dbt/indica",
+    #     profiles_dir="/home/ubuntu/.dbt",
+    #     exclude=["config.materialized:view"]
+    # )
+    # dbt_snapshot = DbtSnapshotOperator(
+    #     task_id="dbt_snapshot",
+    #     project_dir="/home/ubuntu/dbt/indica",
+    #     profiles_dir="/home/ubuntu/.dbt",
+    # )
+    # dbt_test = DbtTestOperator(
+    #     task_id="dbt_test",
+    #     project_dir="/home/ubuntu/dbt/indica",
+    #     profiles_dir="/home/ubuntu/.dbt",
+    # )
+    # success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
     
 
-start_alert >> upsert_tables_group_mapping >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
+# start_alert >> get_comp_id_conf >> upsert_tables_group_mapping >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
+
+upsert_tables_group_mapping
