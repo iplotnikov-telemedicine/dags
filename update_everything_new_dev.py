@@ -27,7 +27,7 @@ redshift_conn = redshift_hook.get_conn()
 cursor = redshift_conn.cursor()
 
 # set up environment
-schema = 'mock'
+schema = 'staging'
 
 
 def start_slack_alert(context):
