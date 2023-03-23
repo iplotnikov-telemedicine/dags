@@ -26,6 +26,9 @@ redshift_hook = RedshiftSQLHook(
 redshift_conn = redshift_hook.get_conn()
 cursor = redshift_conn.cursor()
 
+# set up environment
+schema = 'staging'
+
 
 def start_slack_alert(context):
     slack_webhook_token = BaseHook.get_connection('slack').password
@@ -255,38 +258,53 @@ with DAG(
     default_args=default_args,
     catchup=False,
 ) as dag:
-    start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
+    if schema == 'staging':
+        start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
 
+        with TaskGroup('upsert_tables') as upsert_tables_group:
+            # schema = 'staging'
+            for task_params in get_tasks():
+                task_id = task_params['task_id']
+                op_args = task_params['op_args'] + [schema]
+                task = PythonOperator(
+                    task_id=task_id,
+                    python_callable=stg_load,
+                    op_args=op_args,
+                )
+            upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='updated_at')
 
-    with TaskGroup('upsert_tables') as upsert_tables_group:
-        schema = 'staging'
-        for task_params in get_tasks():
-            task_id = task_params['task_id']
-            op_args = task_params['op_args'] + [schema]
-            task = PythonOperator(
-                task_id=task_id,
-                python_callable=stg_load,
-                op_args=op_args,
-            )
-        upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='updated_at')
+        dbt_run = DbtRunOperator(
+            task_id="dbt_run",
+            project_dir="/home/ubuntu/dbt/indica",
+            profiles_dir="/home/ubuntu/.dbt",
+            exclude=["config.materialized:view"]
+        )
+        dbt_snapshot = DbtSnapshotOperator(
+            task_id="dbt_snapshot",
+            project_dir="/home/ubuntu/dbt/indica",
+            profiles_dir="/home/ubuntu/.dbt",
+        )
+        dbt_test = DbtTestOperator(
+            task_id="dbt_test",
+            project_dir="/home/ubuntu/dbt/indica",
+            profiles_dir="/home/ubuntu/.dbt",
+        )
+        success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
+
+        start_alert >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
+
+    else:
+        with TaskGroup('upsert_tables') as upsert_tables_group:
+            # schema = 'staging'
+            for task_params in get_tasks():
+                task_id = task_params['task_id']
+                op_args = task_params['op_args'] + [schema]
+                task = PythonOperator(
+                    task_id=task_id,
+                    python_callable=stg_load,
+                    op_args=op_args,
+                )
+            upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='updated_at')
         
+        upsert_tables_group
 
-    dbt_run = DbtRunOperator(
-        task_id="dbt_run",
-        project_dir="/home/ubuntu/dbt/indica",
-        profiles_dir="/home/ubuntu/.dbt",
-        exclude=["config.materialized:view"]
-    )
-    dbt_snapshot = DbtSnapshotOperator(
-        task_id="dbt_snapshot",
-        project_dir="/home/ubuntu/dbt/indica",
-        profiles_dir="/home/ubuntu/.dbt",
-    )
-    dbt_test = DbtTestOperator(
-        task_id="dbt_test",
-        project_dir="/home/ubuntu/dbt/indica",
-        profiles_dir="/home/ubuntu/.dbt",
-    )
-    success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
-
-start_alert >> upsert_tables_group >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
