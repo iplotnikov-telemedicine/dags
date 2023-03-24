@@ -19,7 +19,8 @@ from python.to_stage_task_mapping import stg_load, get_customers, check_table
 from python.core.connections import redshint_conn_dev
 
 
-env = 'mock' # 'dev' - production, 'mock' - development
+# set up environment - 'staging' - production, 'mock' - development
+schema = 'mock'
 
 
 # Get connection to Redshift DB
@@ -169,10 +170,12 @@ def get_tasks():
         {'task_id': 'upsert_product_vendors', 'op_args': ['product_vendors']},
         {'task_id': 'upsert_products', 'op_args': ['products']},
         {'task_id': 'upsert_register_log', 'op_args': ['register_log']},
+        {'task_id': 'upsert_register', 'op_args': ['register']},
         {'task_id': 'upsert_service_history', 'op_args': ['service_history']},
         {'task_id': 'upsert_sf_guard_group', 'op_args': ['sf_guard_group']},
         {'task_id': 'upsert_sf_guard_user_group', 'op_args': ['sf_guard_user_group']},
         {'task_id': 'upsert_sf_guard_user', 'op_args': ['sf_guard_user']},
+        {'task_id': 'upsert_sf_guard_user_permission', 'op_args': ['sf_guard_user_permission']},
         {'task_id': 'upsert_tax_payment', 'op_args': ['tax_payment']},
         {'task_id': 'upsert_user_activity_record', 'op_args': ['user_activity_record']},
         {'task_id': 'upsert_warehouse_order_logs', 'op_args': ['warehouse_order_logs']},
@@ -194,11 +197,11 @@ def upsert_tables_mapping():
         @task(task_id = 'check_table_' + task_id_name)
         def check_table_task(job_name, schema):
             return check_table(job_name=job_name, schema=schema)
-        check_table_task = check_table_task(job_name=job_name, schema=env)
+        check_table_task = check_table_task(job_name=job_name, schema=schema)
 
 
         @task(task_id=task_id_name, max_active_tis_per_dag=1)
-        def upsert_task(customers_data, job_name, schema=env):
+        def upsert_task(customers_data, job_name, schema=schema):
             stg_load(customer_data=customers_data, job_name=job_name, schema=schema)
         customer_data=get_customers_data()
         upsert_task = upsert_task.partial(job_name=job_name).expand(customers_data=customer_data)
@@ -209,7 +212,7 @@ def upsert_tables_mapping():
     @task(task_id = 'check_table_upsert_warehouse_order_items')
     def check_table_task(job_name, schema):
         return check_table(job_name=job_name, schema=schema)
-    check_table_task = check_table_task(job_name='warehouse_order_items', schema=env)
+    check_table_task = check_table_task(job_name='warehouse_order_items', schema=schema)
 
 
     @task(task_id='get_customers_upsert_warehouse_order_items')
@@ -220,7 +223,7 @@ def upsert_tables_mapping():
 
     @task(task_id='upsert_warehouse_order_items', max_active_tis_per_dag=1)
     def upsert_task(customers_data):
-        upsert_warehouse_order_items(customer_data=customers_data, schema=env, table='warehouse_order_items', date_column='updated_at')
+        upsert_warehouse_order_items(customer_data=customers_data, schema=schema, table='warehouse_order_items', date_column='updated_at')
     customer_data=get_customers_data()
     upsert_task = upsert_task.expand(customers_data=customer_data)
 
@@ -232,8 +235,8 @@ def upsert_tables_mapping():
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    # 'on_failure_callback': failure_slack_alert,
-    # 'on_retry_callback': retry_slack_alert,
+    'on_failure_callback': failure_slack_alert,
+    'on_retry_callback': retry_slack_alert,
     'retries': 10,
     'retry_delay': pendulum.duration(seconds=60)
 }
@@ -243,45 +246,36 @@ with DAG(
     dag_id='update_everything',
     max_active_tasks=32,
     schedule=None, #'0 8 * * *', # UTC time
-    start_date=pendulum.datetime(2022, 12, 8),
+    start_date=pendulum.datetime(2023, 3, 24),
     default_args=default_args,
     catchup=False,
 ) as dag:
-    # start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
+    if schema == 'staging':
+        start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
 
-    upsert_tables_group_mapping = upsert_tables_mapping()
+        upsert_tables_group_mapping = upsert_tables_mapping()
 
-    # with TaskGroup('upsert_tables') as upsert_tables_group:
-    #     schema = 'staging'
-    #     for task_params in get_tasks():
-    #         task_id = task_params['task_id']
-    #         op_args = task_params['op_args'] + [schema]
-    #         task = PythonOperator(
-    #             task_id=task_id,
-    #             python_callable=stg_load,
-    #             op_args=op_args,
-    #         )
-    #     upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='updated_at')
+        dbt_run = DbtRunOperator(
+            task_id="dbt_run",
+            project_dir="/home/ubuntu/dbt/indica",
+            profiles_dir="/home/ubuntu/.dbt",
+            exclude=["config.materialized:view"]
+        )
+        dbt_snapshot = DbtSnapshotOperator(
+            task_id="dbt_snapshot",
+            project_dir="/home/ubuntu/dbt/indica",
+            profiles_dir="/home/ubuntu/.dbt",
+        )
+        dbt_test = DbtTestOperator(
+            task_id="dbt_test",
+            project_dir="/home/ubuntu/dbt/indica",
+            profiles_dir="/home/ubuntu/.dbt",
+        )
+        success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
-    # dbt_run = DbtRunOperator(
-    #     task_id="dbt_run",
-    #     project_dir="/home/ubuntu/dbt/indica",
-    #     profiles_dir="/home/ubuntu/.dbt",
-    #     exclude=["config.materialized:view"]
-    # )
-    # dbt_snapshot = DbtSnapshotOperator(
-    #     task_id="dbt_snapshot",
-    #     project_dir="/home/ubuntu/dbt/indica",
-    #     profiles_dir="/home/ubuntu/.dbt",
-    # )
-    # dbt_test = DbtTestOperator(
-    #     task_id="dbt_test",
-    #     project_dir="/home/ubuntu/dbt/indica",
-    #     profiles_dir="/home/ubuntu/.dbt",
-    # )
-    # success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
-    
+        start_alert >> upsert_tables_group_mapping >> dbt_snapshot >> dbt_run >> dbt_test >> success_alert
 
-# start_alert >> get_comp_id_conf >> upsert_tables_group_mapping >> dbt_run >> dbt_snapshot >> dbt_test >> success_alert
-
-upsert_tables_group_mapping
+    else:
+        upsert_tables_group_mapping = upsert_tables_mapping()
+        
+        upsert_tables_group_mapping
