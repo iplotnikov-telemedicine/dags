@@ -20,7 +20,7 @@ from python.core.connections import redshint_conn_dev
 
 
 # set up environment - 'staging' - production, 'mock' - development
-schema = 'mock'
+schema = 'staging'
 
 
 # Get connection to Redshift DB
@@ -230,8 +230,6 @@ def upsert_tables_mapping():
     check_table_task >> upsert_task
 
 
-    
-
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -243,7 +241,7 @@ default_args = {
 
 
 with DAG(
-    dag_id='update_everything',
+    dag_id='update_everything_mapping',
     max_active_tasks=32,
     schedule=None, #'0 8 * * *', # UTC time
     start_date=pendulum.datetime(2023, 3, 24),
