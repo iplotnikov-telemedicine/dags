@@ -142,7 +142,7 @@ def stg_load(*op_args, **kwargs):
             # creating temp table with new data increment
             query = f'''
                 CREATE temporary TABLE {table}_{comp_id}_temp as
-                SELECT *
+                SELECT {source_fields}
                 FROM {ext_schema}.{table}
                 WHERE {increment} > (
                     SELECT coalesce(max({increment}), '1970-01-01 00:00:00'::timestamp)
