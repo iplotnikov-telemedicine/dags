@@ -307,4 +307,3 @@ with DAG(
             upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='updated_at')
         
         upsert_tables_group
-        
