@@ -156,16 +156,16 @@ def upsert_warehouse_order_items(customer_data, schema, table, date_column):
 
 
 def get_tasks():
-    job_list = []
+    tasks_list = []
     for job in get_all_job_names():
-        job_list.append({'task_id': 'upsert_' + job, 'op_args': [job]})
-    return job_list
+        tasks_list.append({'task_id': 'upsert_' + job, 'job_name': job})
+    return tasks_list
 
 
 @task_group
 def upsert_tables_mapping():
     for task_params in get_tasks():
-        task_id_name, job_name = task_params['task_id'], ', '.join(list(map(str, task_params['op_args'])))
+        task_id_name, job_name = task_params['task_id'], task_params['job_name']
 
         @task(task_id='get_customers_' + task_id_name)
         def get_customers_data(**kwargs):
