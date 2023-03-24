@@ -17,6 +17,7 @@ from airflow.decorators import task, task_group
 from airflow.hooks.base import BaseHook
 from python.to_stage_task_mapping import stg_load, get_customers, check_table
 from python.core.connections import redshint_conn_dev
+from python.core.configs import get_all_job_names
 
 
 # set up environment - 'staging' - production, 'mock' - development
@@ -155,32 +156,10 @@ def upsert_warehouse_order_items(customer_data, schema, table, date_column):
 
 
 def get_tasks():
-    return [
-        {'task_id': 'upsert_brands', 'op_args': ['brands']},
-        {'task_id': 'upsert_company_config', 'op_args': ['company_config']},
-        {'task_id': 'upsert_discounts', 'op_args': ['discounts']},
-        {'task_id': 'upsert_patient_group_ref', 'op_args': ['patient_group_ref']},
-        {'task_id': 'upsert_patient_group', 'op_args': ['patient_group']},
-        {'task_id': 'upsert_patients', 'op_args': ['patients']},
-        {'task_id': 'upsert_product_categories', 'op_args': ['product_categories']},
-        {'task_id': 'upsert_product_checkins', 'op_args': ['product_checkins']},
-        {'task_id': 'upsert_product_filter_index', 'op_args': ['product_filter_index']},
-        {'task_id': 'upsert_product_office_qty', 'op_args': ['product_office_qty']},
-        {'task_id': 'upsert_product_transactions', 'op_args': ['product_transactions']},
-        {'task_id': 'upsert_product_vendors', 'op_args': ['product_vendors']},
-        {'task_id': 'upsert_products', 'op_args': ['products']},
-        {'task_id': 'upsert_register_log', 'op_args': ['register_log']},
-        {'task_id': 'upsert_register', 'op_args': ['register']},
-        {'task_id': 'upsert_service_history', 'op_args': ['service_history']},
-        {'task_id': 'upsert_sf_guard_group', 'op_args': ['sf_guard_group']},
-        {'task_id': 'upsert_sf_guard_user_group', 'op_args': ['sf_guard_user_group']},
-        {'task_id': 'upsert_sf_guard_user', 'op_args': ['sf_guard_user']},
-        {'task_id': 'upsert_sf_guard_user_permission', 'op_args': ['sf_guard_user_permission']},
-        {'task_id': 'upsert_tax_payment', 'op_args': ['tax_payment']},
-        {'task_id': 'upsert_user_activity_record', 'op_args': ['user_activity_record']},
-        {'task_id': 'upsert_warehouse_order_logs', 'op_args': ['warehouse_order_logs']},
-        {'task_id': 'upsert_warehouse_orders', 'op_args': ['warehouse_orders']}
-    ]
+    job_list = []
+    for job in get_all_job_names():
+        job_list.append({'task_id': 'upsert_' + job, 'op_args': [job]})
+    return job_list
 
 
 @task_group
