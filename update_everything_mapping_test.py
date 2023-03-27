@@ -112,7 +112,7 @@ def upsert_warehouse_order_items(customer_data, schema, table, date_column):
         ON {table}.order_id = warehouse_orders.id
         WHERE warehouse_orders.{date_column} > (
             SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-            FROM {schema}.warehouse_orders
+            FROM {schema}.warehouse_order_items
             WHERE comp_id = {comp_id}
         ) and warehouse_orders.{date_column} < CURRENT_DATE + interval '8 hours'
             and warehouse_orders.{date_column} IS NOT NULL
