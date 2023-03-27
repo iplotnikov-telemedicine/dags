@@ -162,7 +162,7 @@ def upsert_warehouse_order_items(schema, table, date_column, **kwargs):
             FROM {ext_schema}.{table}
             INNER JOIN {ext_schema}.warehouse_orders
             ON {table}.order_id = warehouse_orders.id
-            WHERE {table}.{date_column} > (
+            WHERE warehouse_orders.{date_column} > (
                 SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
                 FROM {schema}.{table}
                 WHERE comp_id = {comp_id}
@@ -272,7 +272,7 @@ with DAG(
                     python_callable=stg_load,
                     op_args=op_args,
                 )
-            upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='updated_at')
+            upsert_warehouse_order_items(schema=schema, table='warehouse_order_items', date_column='confirmed_at')
 
         dbt_run = DbtRunOperator(
             task_id="dbt_run",
