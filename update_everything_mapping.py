@@ -10,7 +10,7 @@ from airflow.models import DAG
 # from airflow.operators.python import PythonOperator
 from airflow.operators.empty import EmptyOperator
 # from airflow.providers.amazon.aws.operators.redshift_sql import RedshiftSQLOperator
-from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
+# from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
 from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
 from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator, DbtSnapshotOperator
 from airflow.decorators import task, task_group
@@ -20,7 +20,7 @@ from python.core.connections import redshint_conn_dev
 from python.core.configs import get_all_job_names
 
 
-# set up environment - 'staging' - production, 'mock' - development
+# set up environment: 'staging' - production, 'mock' - development
 schema = 'staging'
 
 

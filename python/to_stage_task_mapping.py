@@ -33,7 +33,11 @@ def get_customers(table, comp_id_list, is_full_load=False):
             from ext_indica_info.tables
             where table_schema like '%_company' 
                 and table_name = '{table}'
-                and update_time >= CURRENT_DATE - INTERVAL '16 HOUR')
+                and (
+                    update_time >= CURRENT_DATE - INTERVAL '16 HOUR'
+                    or table_rows > 0
+                )
+            )
         '''
     query = f'''
         SELECT int_customers.comp_id, TRIM(svv_external_schemas.schemaname) as schemaname
