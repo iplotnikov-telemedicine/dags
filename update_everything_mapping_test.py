@@ -110,12 +110,12 @@ def upsert_warehouse_order_items(customer_data, schema, table, date_column):
         FROM {ext_schema}.{table}
         INNER JOIN {ext_schema}.warehouse_orders
         ON {table}.order_id = warehouse_orders.id
-        WHERE {table}.{date_column} > (
+        WHERE warehouse_orders.{date_column} > (
             SELECT coalesce(max({date_column}), '1970-01-01 00:00:00'::timestamp)
-            FROM {schema}.{table}
+            FROM {schema}.warehouse_orders
             WHERE comp_id = {comp_id}
-        ) and {table}.{date_column} < CURRENT_DATE + interval '8 hours'
-            and warehouse_orders.confirmed_at IS NOT NULL
+        ) and warehouse_orders.{date_column} < CURRENT_DATE + interval '8 hours'
+            and warehouse_orders.{date_column} IS NOT NULL
     '''
     cursor.execute(query)
     logging.info(f'Temp table is created')
