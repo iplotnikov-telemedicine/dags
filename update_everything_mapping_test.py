@@ -201,15 +201,15 @@ def get_tasks():
         {'task_id': 'upsert_products', 'op_args': ['products']},
         # {'task_id': 'upsert_register_log', 'op_args': ['register_log']},
         {'task_id': 'upsert_register', 'op_args': ['register']},
-        {'task_id': 'upsert_service_history', 'op_args': ['service_history']},
+        # {'task_id': 'upsert_service_history', 'op_args': ['service_history']},
         # {'task_id': 'upsert_sf_guard_group', 'op_args': ['sf_guard_group']},
         # {'task_id': 'upsert_sf_guard_user_group', 'op_args': ['sf_guard_user_group']},
-        {'task_id': 'upsert_sf_guard_user', 'op_args': ['sf_guard_user']},
+        # {'task_id': 'upsert_sf_guard_user', 'op_args': ['sf_guard_user']},
         # {'task_id': 'upsert_sf_guard_user_permission', 'op_args': ['sf_guard_user_permission']},
         # {'task_id': 'upsert_tax_payment', 'op_args': ['tax_payment']},
         # {'task_id': 'upsert_user_activity_record', 'op_args': ['user_activity_record']},
         # {'task_id': 'upsert_warehouse_order_logs', 'op_args': ['warehouse_order_logs']},
-        {'task_id': 'upsert_warehouse_orders', 'op_args': ['warehouse_orders']}
+        # {'task_id': 'upsert_warehouse_orders', 'op_args': ['warehouse_orders']}
     ]
 
 
@@ -253,7 +253,7 @@ def upsert_tables_mapping():
 
     @task(task_id='upsert_warehouse_order_items', max_active_tis_per_dag=1)
     def upsert_task(customers_data):
-        upsert_warehouse_order_items(customer_data=customers_data, schema=schema, table='warehouse_order_items', date_column='updated_at')
+        upsert_warehouse_order_items(customer_data=customers_data, schema=schema, table='warehouse_order_items', date_column='confirmed_at')
     customer_data=get_customers_data()
     upsert_task = upsert_task.expand(customers_data=customer_data)
 

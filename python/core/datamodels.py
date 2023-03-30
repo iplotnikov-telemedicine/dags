@@ -30,6 +30,7 @@ class JobConfig:
     map: List[MappingItem]
     load_type: str = '_unknown_'
     pk: str = None
+    custom_query: str = None
 
     def __post_init__(self):
         self.map = [MappingItem(**kv) for kv in self.map]

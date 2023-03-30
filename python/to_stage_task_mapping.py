@@ -53,12 +53,12 @@ def get_customers(table, comp_id_list, is_full_load=False):
 
 
 
-def check_table(job_name, schema):
-    job_cfg = get_job_config(job_name)
+def check_table(job_name, schema, path='/'):
+    job_cfg = get_job_config(job_name, path)
     target_schema = job_cfg.schema if schema is None else schema
     table = job_cfg.table
     source_fields = get_fields_for('source', job_cfg.map)
-
+    
     # check if table not exists in target schema
     query = f'''
         select 1
@@ -97,7 +97,7 @@ def stg_load(customer_data, job_name, schema):
     pk = job_cfg.pk
     source_fields = get_fields_for('source', job_cfg.map)
     # target_fields = get_fields_for('target', job_cfg.map)
-
+    custom_query = job_cfg.custom_query if job_cfg.custom_query is not None else None
     logging.info(f'Start loading with type: {load_type}')
     logging.info(f'Task is starting for company {comp_id}')
     if load_type == 'increment':
@@ -146,16 +146,19 @@ def stg_load(customer_data, job_name, schema):
         cursor.execute('END')
     elif load_type == 'increment_with_delete':
         # creating temp table with new data increment
-        query = f'''
-            CREATE temporary TABLE {table}_{comp_id}_temp as
-            SELECT {source_fields}
-            FROM {ext_schema}.{table}
-            WHERE {increment} > (
-                SELECT coalesce(max({increment}), '1970-01-01 00:00:00'::timestamp)
-                FROM {target_schema}.{table}
-                WHERE comp_id = {comp_id}
-            ) and {increment} < CURRENT_DATE + interval '8 hours'
-        '''
+        if custom_query is not None:
+            query = custom_query.format(table=table, comp_id=comp_id, ext_schema=ext_schema, increment=increment, target_schema=target_schema)
+        else:
+            query = f'''
+                CREATE temporary TABLE {table}_{comp_id}_temp as
+                SELECT {source_fields}
+                FROM {ext_schema}.{table}
+                WHERE {increment} > (
+                    SELECT coalesce(max({increment}), '1970-01-01 00:00:00'::timestamp)
+                    FROM {target_schema}.{table}
+                    WHERE comp_id = {comp_id}
+                ) and {increment} < CURRENT_DATE + interval '8 hours'
+            '''
         cursor.execute(query)
         logging.info(f'Temp table is created')
         # deleting from target table data that were updated
