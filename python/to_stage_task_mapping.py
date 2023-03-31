@@ -5,7 +5,7 @@ import pendulum
 # import json
 from python.core.configs import get_job_config
 from python.core.utils import get_fields_for
-from python.core.connections import redshint_conn_dev
+from python.core.connections import redshift_conn_dev
 # from airflow.decorators import task
 
 
@@ -13,7 +13,7 @@ env = 'mock' # 'dev' - production, 'mock' - development
 
 
 # Get connection to Redshift DB
-redshift_conn = redshint_conn_dev()
+redshift_conn = redshift_conn_dev()
 cursor = redshift_conn.cursor()
 
 

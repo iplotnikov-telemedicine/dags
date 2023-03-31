@@ -16,7 +16,7 @@ from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator, Db
 from airflow.decorators import task, task_group
 from airflow.hooks.base import BaseHook
 from python.to_stage_task_mapping import stg_load, get_customers, check_table
-from python.core.connections import redshint_conn_dev
+from python.core.connections import redshift_conn_dev
 from python.core.configs import get_all_job_names
 
 
@@ -25,7 +25,7 @@ schema = 'staging'
 
 
 # Get connection to Redshift DB
-redshift_conn = redshint_conn_dev()
+redshift_conn = redshift_conn_dev()
 cursor = redshift_conn.cursor()
 
 

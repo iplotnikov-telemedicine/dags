@@ -5,7 +5,7 @@ from psycopg2.extensions import ISOLATION_LEVEL_SERIALIZABLE
 
 
 # Get connection to Redshift DB on production environment
-def redshint_conn_dev():
+def redshift_conn_dev():
     redshift_hook = RedshiftSQLHook(
         redshift_conn_id='redshift_default',
         schema='dev'
@@ -16,7 +16,7 @@ def redshint_conn_dev():
 
 
 # Get connection to Redshift DB on dev environment
-def redshint_conn_mock():
+def redshift_conn_mock():
     redshift_hook = RedshiftSQLHook(
         redshift_conn_id='redshift_mock',
         schema='mock'
