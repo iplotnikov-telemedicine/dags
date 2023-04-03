@@ -130,8 +130,7 @@ def upsert_tables_mapping():
         @task(task_id=task_id_name, max_active_tis_per_dag=1)
         def upsert_task(customers_data, job_name, schema=schema):
             stg_load(customer_data=customers_data, job_name=job_name, schema=schema)
-        customer_data=get_customers_task
-        upsert_task = upsert_task.partial(job_name=job_name).expand(customers_data=customer_data)
+        upsert_task = upsert_task.partial(job_name=job_name).expand(customers_data=get_customers_task)
 
         check_table_task >> upsert_task
 
