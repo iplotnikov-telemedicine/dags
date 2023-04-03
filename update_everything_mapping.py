@@ -150,7 +150,7 @@ with DAG(
     dag_id='update_everything_mapping',
     max_active_tasks=32,
     schedule='0 8 * * *', # UTC time
-    start_date=pendulum.datetime(2023, 3, 24),
+    start_date=pendulum.datetime(2023, 4, 4),
     default_args=default_args,
     catchup=False,
 ) as dag:
