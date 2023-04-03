@@ -138,8 +138,8 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'on_failure_callback': failure_slack_alert,
-    'on_retry_callback': retry_slack_alert,
-    'retries': 10,
+    # 'on_retry_callback': retry_slack_alert,
+    'retries': 5,
     'retry_delay': pendulum.duration(seconds=60)
 }
 
@@ -147,7 +147,7 @@ default_args = {
 with DAG(
     dag_id='update_everything_mapping',
     max_active_tasks=32,
-    schedule=None, #'0 8 * * *', # UTC time
+    schedule='0 8 * * *', # UTC time
     start_date=pendulum.datetime(2023, 3, 24),
     default_args=default_args,
     catchup=False,
@@ -172,6 +172,7 @@ with DAG(
             task_id="dbt_test",
             project_dir="/home/ubuntu/dbt/indica",
             profiles_dir="/home/ubuntu/.dbt",
+            retries=0
         )
         success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 

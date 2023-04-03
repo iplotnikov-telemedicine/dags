@@ -159,8 +159,8 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'on_failure_callback': failure_slack_alert,
-    'on_retry_callback': retry_slack_alert,
-    'retries': 10,
+    # 'on_retry_callback': retry_slack_alert,
+    'retries': 5,
     'retry_delay': pendulum.duration(seconds=60)
 }
 
@@ -193,6 +193,7 @@ with DAG(
             task_id="dbt_test",
             project_dir="/home/ubuntu/dbt/indica",
             profiles_dir="/home/ubuntu/.dbt",
+            retries=0
         )
         success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
