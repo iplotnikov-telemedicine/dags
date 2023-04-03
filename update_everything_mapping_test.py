@@ -134,22 +134,24 @@ def upsert_tables_mapping():
     for task_params in get_tasks():
         task_id_name, job_name = task_params['task_id'], ', '.join(list(map(str, task_params['op_args'])))
 
-        @task(task_id='get_customers_' + task_id_name)
-        def get_customers_data(**kwargs):
-            comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
-            logging.info(f'comp_id_list: {comp_id_list}')
-            return get_customers(table=job_name, comp_id_list=comp_id_list)
-
         @task(task_id = 'check_table_' + task_id_name)
         def check_table_task(job_name, schema):
             return check_table(job_name=job_name, schema=schema)
         check_table_task = check_table_task(job_name=job_name, schema=schema)
 
 
+        @task(task_id='get_customers_' + task_id_name)
+        def get_customers_data(job_name, **kwargs):
+            comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
+            logging.info(f'comp_id_list: {comp_id_list}')
+            return get_customers(table=job_name, comp_id_list=comp_id_list)
+        get_customers_task = get_customers_data(job_name=job_name)
+
+
         @task(task_id=task_id_name, max_active_tis_per_dag=1)
         def upsert_task(customers_data, job_name, schema=schema):
             stg_load(customer_data=customers_data, job_name=job_name, schema=schema)
-        customer_data=get_customers_data()
+        customer_data=get_customers_task
         upsert_task = upsert_task.partial(job_name=job_name).expand(customers_data=customer_data)
 
         check_table_task >> upsert_task
