@@ -152,7 +152,6 @@ with DAG(
     start_date=pendulum.datetime(2023, 4, 3),
     default_args=default_args,
     catchup=False,
-    concurrency=32
 ) as dag:
     if schema == 'staging':
         start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
