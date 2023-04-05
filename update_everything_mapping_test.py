@@ -102,10 +102,10 @@ def success_slack_alert(context):
 
 def get_tasks():
     return [
-        # {'task_id': 'upsert_brands', 'op_args': ['brands']},
-        # {'task_id': 'upsert_company_config', 'op_args': ['company_config']},
-        # {'task_id': 'upsert_discounts', 'op_args': ['discounts']},
-        # {'task_id': 'upsert_patient_group_ref', 'op_args': ['patient_group_ref']},
+        {'task_id': 'upsert_brands', 'op_args': ['brands']},
+        {'task_id': 'upsert_company_config', 'op_args': ['company_config']},
+        {'task_id': 'upsert_discounts', 'op_args': ['discounts']},
+        {'task_id': 'upsert_patient_group_ref', 'op_args': ['patient_group_ref']},
         # {'task_id': 'upsert_patient_group', 'op_args': ['patient_group']},
         {'task_id': 'upsert_patients', 'op_args': ['patients']},
         # {'task_id': 'upsert_product_categories', 'op_args': ['product_categories']},
