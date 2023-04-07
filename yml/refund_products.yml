@@ -1,0 +1,63 @@
+database: dev
+schema: staging
+table: refund_products
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: order_id
+  -
+    source: order_item_id
+  -
+    source: order_type
+  -
+    source: order_number
+  -
+    source: marketplace
+  -
+    source: product_id
+  -
+    source: product_name
+  -
+    source: product_type_id
+  -
+    source: product_type_name
+  -
+    source: product_category_id
+  -
+    source: product_category_name
+  -
+    source: product_checkin_id
+  -
+    source: product_checkin_uid
+  -
+    source: net_weight
+  -
+    source: office_id
+  -
+    source: office_name
+  -
+    source: refund_qty
+  -
+    source: refund_amount
+  -
+    source: refunded_by_user_id
+  -
+    source: refunded_user_name
+  -
+    source: refunded_at
+  -
+    source: register_id
+  -
+    source: register_name
+  -
+    source: is_destroyed
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: note

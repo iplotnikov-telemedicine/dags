@@ -2,26 +2,22 @@ import sys
 import os
 sys.path.insert(0,os.path.abspath(os.path.dirname(__file__)))
 import pendulum
-import logging
-# import json
 from airflow.models import DAG
-# from airflow.models import Variable
-# from airflow.utils.task_group import TaskGroup
-# from airflow.operators.python import PythonOperator
-from airflow.operators.empty import EmptyOperator
-# from airflow.providers.amazon.aws.operators.redshift_sql import RedshiftSQLOperator
-# from airflow.providers.amazon.aws.hooks.redshift_sql import RedshiftSQLHook
-from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
+from airflow.operators.python import PythonOperator
 from airflow_dbt_python.operators.dbt import DbtRunOperator, DbtTestOperator, DbtSnapshotOperator
-from airflow.decorators import task, task_group
+# from airflow.decorators import task, task_group
+from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
 from airflow.hooks.base import BaseHook
-from python.to_stage_task_mapping import stg_load, get_customers, check_table
-from python.core.connections import redshift_conn_dev
+from airflow.operators.empty import EmptyOperator
+# from airflow.models import Variable
+from python.to_stage import stg_load
 from python.core.configs import get_all_job_names
+from python.core.connections import redshift_conn_dev
+from airflow.utils.task_group import TaskGroup
 
 
 # set up environment: 'staging' - production, 'mock' - development
-schema = 'mock'
+schema = 'staging'
 
 
 # Get connection to Redshift DB
@@ -29,7 +25,9 @@ redshift_conn = redshift_conn_dev()
 cursor = redshift_conn.cursor()
 
 
-def start_slack_alert(context):
+def start_slack_alert(context, **kwargs):
+    comp_id_list = kwargs['dag_run'].conf.get('comp_id_list', '')
+    reason = f'*Custom run config*: comp_id_list: {comp_id_list}' if comp_id_list != '' else ''
     slack_webhook_token = BaseHook.get_connection('slack').password
     slack_msg = f"""
         :rocket: Start
@@ -37,6 +35,7 @@ def start_slack_alert(context):
         *Run ID*: {context.get('task_instance').run_id}
         *Execution Time*: {context.get('ts')}
         *Log Url*: {context.get('task_instance').log_url}
+        {reason}
     """
     alert = SlackWebhookOperator(
         task_id='slack_test',
@@ -103,36 +102,14 @@ def success_slack_alert(context):
 
 def get_tasks():
     tasks_list = []
-    for job in get_all_job_names():
-        tasks_list.append({'task_id': 'upsert_' + job, 'job_name': job})
+    # for job in get_all_job_names():
+    #     tasks_list.append({'task_id': 'upsert_' + job, 'job_name': [job]})
+    tasks_list = [
+        {'task_id': 'upsert_' + 'recommendations', 'job_name': ['recommendations']},
+        {'task_id': 'upsert_' + 'refund_products', 'job_name': ['refund_products']},
+        {'task_id': 'upsert_' + 'tax_excise', 'job_name': ['tax_excise']}
+        ]
     return tasks_list
-
-
-@task_group
-def upsert_tables_mapping():
-    for task_params in get_tasks():
-        task_id_name, job_name = task_params['task_id'], task_params['job_name']
-
-        @task(task_id = 'check_table_' + task_id_name)
-        def check_table_task(job_name, schema):
-            return check_table(job_name=job_name, schema=schema)
-        check_table_task = check_table_task(job_name=job_name, schema=schema)
-
-
-        @task(task_id='get_customers_' + task_id_name)
-        def get_customers_data(job_name, **kwargs):
-            comp_id_list = kwargs['dag_run'].conf.get('comp_id_list')
-            logging.info(f'comp_id_list: {comp_id_list}')
-            return get_customers(table=job_name, comp_id_list=comp_id_list)
-        get_customers_task = get_customers_data(job_name=job_name)
-
-
-        @task(task_id=task_id_name, max_active_tis_per_dag=1)
-        def upsert_task(customers_data, job_name, schema=schema):
-            stg_load(customer_data=customers_data, job_name=job_name, schema=schema)
-        upsert_task = upsert_task.partial(job_name=job_name).expand(customers_data=get_customers_task)
-
-        check_table_task >> upsert_task
 
 
 default_args = {
@@ -146,17 +123,26 @@ default_args = {
 
 
 with DAG(
-    dag_id='update_everything_mapping_mock',
+    dag_id='update_everything',
     max_active_tasks=32,
-    schedule=None, #'0 8 * * *', # UTC time
-    start_date=pendulum.datetime(2023, 4, 3),
+    schedule='0 8 * * *', # UTC time
+    start_date=pendulum.datetime(2023, 4, 7),
     default_args=default_args,
     catchup=False,
+    tags=[schema]
 ) as dag:
     if schema == 'staging':
         start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
 
-        upsert_tables_group_mapping = upsert_tables_mapping()
+        with TaskGroup('upsert_tables') as upsert_tables_group:
+            for task_params in get_tasks():
+                task_id = task_params['task_id']
+                op_args = task_params['job_name'] + [schema]
+                task = PythonOperator(
+                    task_id=task_id,
+                    python_callable=stg_load,
+                    op_args=op_args,
+                )
 
         dbt_run = DbtRunOperator(
             task_id="dbt_run",
@@ -177,9 +163,17 @@ with DAG(
         )
         success_alert = EmptyOperator(task_id="success_alert", on_success_callback=success_slack_alert)
 
-        start_alert >> upsert_tables_group_mapping >> dbt_snapshot >> dbt_run >> dbt_test >> success_alert
+        start_alert >> upsert_tables_group >> dbt_snapshot >> dbt_run >> dbt_test >> success_alert
 
     else:
-        upsert_tables_group_mapping = upsert_tables_mapping()
+        with TaskGroup('upsert_tables') as upsert_tables_group:
+            for task_params in get_tasks():
+                task_id = task_params['task_id']
+                op_args = task_params['job_name'] + [schema]
+                task = PythonOperator(
+                    task_id=task_id,
+                    python_callable=stg_load,
+                    op_args=op_args,
+                )
         
-        upsert_tables_group_mapping
+        upsert_tables_group

@@ -1,0 +1,33 @@
+database: dev
+schema: staging
+table: product_prices
+load_type: increment_with_delete
+increment_column: updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: price_group_id
+  -
+    source: range_from
+  -
+    source: range_to
+  -
+    source: price
+  -
+    source: created_at
+  -
+    source: updated_at
+  -
+    source: sync_created_at
+  -
+    source: sync_updated_at
+  -
+    source: is_on_tv_device
+  -
+    source: weight_type
+  -
+    source: patient_type
+
+ 
