@@ -58,7 +58,7 @@ def stg_load(*op_args, **kwargs):
     pk = job_cfg.pk
     source_fields = get_fields_for('source', job_cfg.map)
     # target_fields = get_fields_for('target', job_cfg.map)
-    custom_query = job_cfg.custom_query if job_cfg.custom_query is not None else None
+    custom_query = job_cfg.custom_query
 
     # check if table not exists in target schema
     query = f'''
