@@ -1,0 +1,17 @@
+database: dev
+schema: staging
+table: product_price_group
+load_type: full
+increment_column: sync_updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: product_id
+  -
+    source: sync_created_at
+  -
+    source: sync_updated_at
+
+ 

@@ -1,0 +1,81 @@
+database: dev
+schema: staging
+table: recommendations
+load_type: full
+increment_column: 
+pk: ['rec_id']
+map:
+  -
+    source: rec_id
+  -
+    source: rec_pat_id
+  -
+    source: rec_doc_id
+  -
+    source: rec_indica_doc_id
+  -
+    source: rec_office_id
+  -
+    source: rec_exam_form_id
+  -
+    source: rec_number
+  -
+    source: rec_type
+  -
+    source: rec_length
+  -
+    source: rec_valid_from
+  -
+    source: rec_valid_to
+  -
+    source: rec_limit_exemp
+  -
+    source: rec_is_revoked
+  -
+    source: rec_revoke_reason
+  -
+    source: rec_revoke_user_id
+  -
+    source: rec_revoke_user_name
+  -
+    source: rec_revoke_date
+  -
+    source: rec_created_at
+  -
+    source: rec_doctor_name
+  -
+    source: rec_office_address
+  -
+    source: rec_insert_signature
+  -
+    source: rec_is_copy
+  -
+    source: rec_is_approved
+  -
+    source: rec_delete_note
+  -
+    source: rec_is_edited
+  -
+    source: deleted_at
+  -
+    source: is_crypted
+  -
+    source: rec_is_denied
+  -
+    source: rec_verification_provider
+  -
+    source: rec_verification_provider_data
+  -
+    source: is_current
+  -
+    source: pocketsize_number
+  -
+    source: without_controls
+  -
+    source: limits_exemption
+  -
+    source: is_zenmd_ref
+  -
+    source: revoke_scheduled_at
+  -
+    source: is_validated_by_mask

@@ -1,0 +1,31 @@
+database: dev
+schema: staging
+table: tax_excise
+load_type: full
+increment_column: sync_updated_at
+pk: ['id']
+map:
+  -
+    source: id
+  -
+    source: tax_tier_version_id
+  -
+    source: is_enabled
+  -
+    source: is_included_city_local_tax_sdp
+  -
+    source: is_included_delivery_fee_sdp
+  -
+    source: is_included_delivery_fee_nsdp
+  -
+    source: is_applied_to_discounted_sdp
+  -
+    source: rate_sdp
+  -
+    source: rate_nsdp
+  -
+    source: sync_created_at
+  -
+    source: sync_updated_at
+  -
+    source: count_from_cost

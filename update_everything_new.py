@@ -1623,6 +1623,7 @@ with DAG(
     start_date=datetime(year=2022, month=12, day=8),
     default_args=default_args,
     catchup=False,
+    tags=['archived DAGs']
 ) as dag:
     start_alert = EmptyOperator(task_id="start_alert", on_success_callback=start_slack_alert)
     # get_customers_task = get_customers()
