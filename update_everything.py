@@ -102,13 +102,13 @@ def success_slack_alert(context):
 
 def get_tasks():
     tasks_list = []
-    # for job in get_all_job_names():
-    #     tasks_list.append({'task_id': 'upsert_' + job, 'job_name': [job]})
-    tasks_list = [
-        {'task_id': 'upsert_' + 'recommendations', 'job_name': ['recommendations']},
-        {'task_id': 'upsert_' + 'refund_products', 'job_name': ['refund_products']},
-        {'task_id': 'upsert_' + 'tax_excise', 'job_name': ['tax_excise']}
-        ]
+    for job in get_all_job_names():
+        tasks_list.append({'task_id': 'upsert_' + job, 'job_name': [job]})
+    # list for manual run on local setup
+    # tasks_list = [
+    #     {'task_id': 'upsert_' + 'recommendations', 'job_name': ['recommendations']},
+    #     {'task_id': 'upsert_' + 'refund_products', 'job_name': ['refund_products']},
+    #     ]
     return tasks_list
 
 
