@@ -126,7 +126,7 @@ with DAG(
     dag_id='update_everything',
     max_active_tasks=32,
     schedule='0 8 * * *', # UTC time
-    start_date=pendulum.datetime(2023, 4, 7),
+    start_date=pendulum.datetime(2023, 4, 9),
     default_args=default_args,
     catchup=False,
     tags=[schema]
