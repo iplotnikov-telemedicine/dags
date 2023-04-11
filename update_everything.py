@@ -25,9 +25,7 @@ redshift_conn = redshift_conn_dev()
 cursor = redshift_conn.cursor()
 
 
-def start_slack_alert(context, **kwargs):
-    comp_id_list = kwargs['dag_run'].conf.get('comp_id_list', '')
-    reason = f'*Custom run config*: comp_id_list: {comp_id_list}' if comp_id_list != '' else ''
+def start_slack_alert(context):
     slack_webhook_token = BaseHook.get_connection('slack').password
     slack_msg = f"""
         :rocket: Start
@@ -35,7 +33,6 @@ def start_slack_alert(context, **kwargs):
         *Run ID*: {context.get('task_instance').run_id}
         *Execution Time*: {context.get('ts')}
         *Log Url*: {context.get('task_instance').log_url}
-        {reason}
     """
     alert = SlackWebhookOperator(
         task_id='slack_test',
