@@ -1,7 +1,7 @@
 database: dev
 schema: staging
 table: product_price_group
-load_type: increment_with_delete
+load_type: full
 increment_column: sync_updated_at
 pk: ['id']
 map:
